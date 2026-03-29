@@ -1,0 +1,73 @@
+{
+    "permissions": {
+      "allow": [
+        "Read",
+        "Grep",
+        "Glob",
+        "WebFetch"
+      ],
+      "deny": [
+        "Bash(rm -rf /)",
+        "Bash(rm -rf ~)",
+        "Bash(DROP TABLE)",
+        "Bash(DROP DATABASE)"
+      ]
+    },
+    "hooks": {
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "if [ -f package.json ] && grep -q '\"test\"' package.json; then npm test 2>&1 | tail -20; elif [ -f Makefile ] && grep -q '^test:' Makefile; then make test 2>&1 | tail -20; elif [ -f pyproject.toml ] || [ -f setup.py ]; then python -m pytest --tb=short 2>&1 | tail -20; else echo 'No test runner detected — skipping'; fi"
+            }
+          ]
+        }
+      ],
+      "PostToolUse": [
+        {
+          "matcher": "Write|Edit",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "FILE=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))\" 2>/dev/null); if [ -z \"$FILE\" ] || [ ! -f \"$FILE\" ]; then exit 0; fi; EXT=\"${FILE##*.}\"; case \"$EXT\" in js|jsx|ts|tsx) npx eslint --fix \"$FILE\" 2>/dev/null || true ;; py) python -m ruff check --fix \"$FILE\" 2>/dev/null || python -m flake8 \"$FILE\" 2>/dev/null || true ;; esac"
+            }
+          ]
+        }
+      ],
+      "PreToolUse": [
+        {
+          "matcher": "Bash",
+          "hooks": [
+            {
+              "type": "prompt",
+              "prompt": "The agent is about to run a bash command. Check if it is destructive (rm -rf on important dirs, DROP TABLE/DATABASE, formatting disks, overwriting critical files, pushing to main without PR). Respond with JSON: {\"decision\": \"block\", \"reason\": \"...\"} if destructive, or {\"decision\": \"approve\", \"reason\": \"...\"} if safe."
+            }
+          ]
+        }
+      ],
+      "SubagentStop": [
+        {
+          "hooks": [
+            {
+              "type": "prompt",
+              "prompt": "A subagent just finished its task. Check if its output is complete: does it have a clear conclusion, actionable items or findings, and proper formatting? Respond with JSON: {\"decision\": \"block\", \"reason\": \"...\"} if incomplete or vague, or {\"decision\": \"approve\", \"reason\": \"...\"} if complete."
+            }
+          ]
+        }
+      ],
+      "Notification": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "echo '🔔 Claude needs your attention' && if command -v notify-send &>/dev/null; then notify-send 'Claude Code' 'Waiting for your validation'; elif command -v osascript &>/dev/null; then osascript -e 'display notification \"Waiting for your validation\" with title \"Claude Code\"'; fi"
+            }
+          ]
+        }
+      ]
+    },
+    "env": {
+      "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    }
+  }

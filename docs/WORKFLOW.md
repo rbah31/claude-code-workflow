@@ -1,0 +1,722 @@
+# Development Workflow with Claude Code
+
+> **Version**: 3.2 — March 2026
+> **For**: Two DevSecOps engineers, each with Claude Max
+> **Philosophy**: Keep it simple. The human invokes and validates. Claude executes.
+
+---
+
+## Table of Contents
+
+1. [Philosophy](#1-philosophy)
+2. [Project Architecture](#2-project-architecture)
+3. [Claude Code Mechanisms — Reference](#3-claude-code-mechanisms)
+4. [The 5 Universal Subagents](#4-the-5-universal-subagents)
+5. [The Sprint Cycle](#5-the-sprint-cycle)
+6. [Working as a Pair](#6-working-as-a-pair)
+7. [Bootstrapping a New Project](#7-bootstrapping-a-new-project)
+8. [FAQ](#8-faq)
+9. [Glossary](#9-glossary)
+
+---
+
+## 1. Philosophy
+
+### The Problem We Solve
+
+Without structure, three things happen with Claude Code:
+
+- **Claude drifts.** Long conversations get compacted, instructions disappear, code no longer meets standards.
+- **No traceability.** Each session is an island. You no longer know what was decided, why, or where things stand.
+- **No systematic quality.** The temptation to build → ship without review or testing.
+
+### The Solution in One Sentence
+
+A structured sprint cycle where **skills encode the workflow** and **the human only does two things: invoke and validate**.
+
+If you find yourself copy-pasting a prompt or manually dictating steps to Claude, that's a workflow bug. It should be in a skill.
+
+### The 7 Principles
+
+1. **Plan first.** Never code without a plan. If things go off track, stop and re-plan.
+2. **Subagents for everything specialized.** Isolate concerns, keep the main context clean.
+3. **Capitalize on every mistake.** Update `lessons.md` after every correction. Memory-enabled agents complement this capitalization automatically.
+4. **Prove before declaring "done".** Tests, logs, demo. Hooks enforce this.
+5. **Balanced elegance.** Neither hacks nor over-engineering.
+6. **Claude is autonomous within the phase.** Don't micro-manage. Give scope and context, Claude does the rest.
+7. **Simplicity first.** The simplest change that works. Always.
+8. **Revisit regularly.** Skills and agents must evolve with model capabilities. Every 2-3 months, review directive instructions — if the model naturally does what the skill tells it, simplify. Gotchas and business context are more durable than rigid steps. (Source: Anthropic feedback — "as models improve, tools that once helped may now constrain them.")
+
+### What We Do NOT Do
+
+- **No autonomous orchestrator** between phases. The human validates between each phase. Claude is autonomous WITHIN a phase.
+- **No micro-management.** We don't tell Claude which vulnerabilities to look for, which code pattern to use, or which files to read. Skills and agents have that intelligence.
+- **No Claude Desktop as main tool.** Reserved for deep research and marketing. For dev: everything in Claude Code.
+
+---
+
+## 2. Project Architecture
+
+### File Structure
+
+```
+my-project/
+├── .claude/
+│   ├── CLAUDE.md                    # Source of truth — ~100 lines max
+│   ├── CLAUDE.local.md              # Personal preferences (gitignored)
+│   ├── settings.json                # Hooks, permissions, shared config
+│   ├── settings.local.json          # Local config (gitignored)
+│   ├── agents/                      # 5 universal subagents + 2 optional slots
+│   │   ├── architect.md
+│   │   ├── code-reviewer.md
+│   │   ├── security-auditor.md
+│   │   ├── ops-engineer.md
+│   │   └── qa-tester.md
+│   ├── skills/                      # One skill per cycle phase
+│   │   ├── sprint-plan/
+│   │   ├── build/
+│   │   ├── review/
+│   │   ├── fix/
+│   │   ├── red-team/
+│   │   └── capture-lessons/
+│   └── rules/                       # Conventions scoped by file
+│       ├── general.md
+│       ├── backend/
+│       ├── frontend/
+│       └── security/
+├── tasks/
+│   ├── backlog.md
+│   ├── lessons.md
+│   └── sprints/
+│       └── sprint-XX/
+│           ├── plan.md
+│           ├── build-output.md
+│           ├── review-output.md
+│           ├── fix-output.md
+│           ├── redteam-output.md
+│           └── retrospective.md
+└── src/
+```
+
+### Component Status
+
+| Component | Status | Priority |
+|-----------|--------|----------|
+| CLAUDE.md (template) | 🟢 Implemented | P0 |
+| settings.json (hooks) | 🟢 Implemented | P0 |
+| 5 universal agents | 🟢 Implemented | P0 |
+| Skill `/build` | 🟢 Implemented | P0 |
+| Skill `/review` | 🟢 Implemented | P0 |
+| Skill `/sprint-plan` | 🟢 Implemented | P1 |
+| Skill `/fix` | 🟢 Implemented | P1 |
+| Skill `/red-team` | 🟢 Implemented | P1 |
+| Skill `/capture-lessons` | 🟢 Implemented | P1 |
+| Base rules | 🟢 Implemented | P1 |
+| Infra/CI-CD rule | 🟢 Implemented | P1 |
+| Scheduled tasks | 🟢 Implemented | P2 |
+| Complete project template | 🟢 Implemented | P0 |
+
+> 🟡 = specified in this document, pending implementation
+> 🟢 = implemented and tested
+
+### Which File Does What — In Brief
+
+| File | Role | When It Is Read |
+|------|------|-----------------|
+| `CLAUDE.md` | Vision, stack, critical conventions | Automatically, every session |
+| `CLAUDE.local.md` | Personal preferences | Automatically, every session |
+| `.claude/rules/*` | Detailed conventions, scoped by path | When Claude touches a matching file |
+| `.claude/agents/*` | Specialized expertise with memory | When invoked (auto or explicit) |
+| `.claude/skills/*` | Automated workflows per phase | Via `/skill-name` |
+| `settings.json` | Hooks, permissions | Automatically, every session |
+| `tasks/lessons.md` | Knowledge capital (main mechanism) | Read by skills at the start of each phase |
+| `tasks/sprints/sprint-XX/*` | Handoff between phases | Read by the next phase's skill |
+
+---
+
+## 3. Claude Code Mechanisms — Reference
+
+> This section is a **quick reference**. Come back to it when you wonder "how does this work?". For full documentation: [docs.anthropic.com](https://docs.anthropic.com).
+
+### CLAUDE.md — Persistent Memory
+
+Markdown file read at the start of every session. Never compacted — this is what solves Claude Desktop's drift problem. Recommended max size: ~100-120 lines. Beyond that, Claude skims. Contains the vision, stack, essential conventions, and pointers to rules/skills. Commands: `/init` to bootstrap, `/memory` to edit.
+
+The `CLAUDE.local.md` is the personal version (gitignored): your interaction preferences.
+
+### Rules — Scoped Conventions
+
+Markdown files in `.claude/rules/` loaded automatically based on **path scoping**:
+
+```yaml
+# .claude/rules/security/auth.md
+---
+paths:
+  - "src/auth/**"
+  - "src/crypto/**"
+---
+# Security Rules — Auth & Crypto
+- bcrypt cost factor >= 12
+- JWT expires after 15 min max
+```
+
+When Claude touches `src/auth/`, these rules load. When it works on `src/components/Button.tsx`, they don't. Clean context, relevant conventions.
+
+### Subagents — Specialized Experts
+
+Markdown files in `.claude/agents/`. Each agent has its own context (doesn't pollute the main thread), its system prompt, its allowed tools, and optionally **persistent memory** (`memory: project`).
+
+Memory allows the agent to accumulate knowledge between sessions — codebase patterns, past decisions, previous errors. Combined with `lessons.md` read by skills, this creates a dual capitalization mechanism: one structured (lessons.md), one organic (agent memory). Both complement each other and will gain in effectiveness with Anthropic updates.
+
+Invocation: automatic (Claude delegates when the description matches) or explicit. Command: `/agents`.
+
+### Skills — Automated Workflows
+
+Folders in `.claude/skills/` with a `SKILL.md`. Invocable via `/skill-name`. **Progressive disclosure**: only the frontmatter (~100 tokens) is permanently in context, the content loads on invocation.
+
+- **At project setup**: the 6 cycle skills
+- **During the project**: whenever a task is done manually more than twice → `/skill-creator`
+
+### Hooks — Deterministic Guarantees
+
+Commands that execute at precise points in the lifecycle. Unlike natural language instructions, a hook **always executes**.
+
+"Always run tests" in a CLAUDE.md → wish.
+A `Stop` hook that runs tests → guarantee.
+
+Two types: **command** (shell script, deterministic) and **prompt** (an LLM judges yes/no — for checks requiring judgment).
+
+| Event | Our Usage |
+|-------|-----------|
+| `PostToolUse` (Write/Edit) | Automatic linter after every modification |
+| `Stop` | Mandatory tests before Claude declares "done" |
+| `PreToolUse` (Bash) | Block dangerous commands |
+| `SubagentStop` | Validate subagent output completeness |
+| `Notification` | Desktop alerts when Claude awaits validation |
+
+Config: `/hooks` (interactive) or `settings.json`.
+
+### Agent Teams — Parallelism
+
+Multiple coordinated Claude Code instances: a lead + teammates, each in their own context. Direct communication between teammates (unlike classic subagents).
+
+Usage in our workflow: **intra-phase** parallelism (3 simultaneous reviewers during review, frontend + backend + tests during build). The default path remains **sequential subagents** — Agent Teams is an accelerator when available. The feature is under active development at Anthropic and gaining stability. Activation: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`.
+
+### Other Useful Mechanisms
+
+- **Git Worktrees** (`--worktree`): isolated copies of the repo for parallel work. Recommended with Agent Teams.
+- **Sandbox** (`/sandbox`): OS isolation for Bash commands. Used in red team.
+- **Headless Mode** (`claude -p "..."`): non-interactive execution, for CI/CD and scripts.
+- **Plan Mode** (`Shift+Tab` x2): read-only, Claude analyzes without modifying. Sprint planning and complex tasks.
+- **Extended Thinking**: adaptive reasoning. "think hard" or "ultrathink" to force deep reasoning.
+- **Useful commands**: `/doctor`, `/context`, `/compact`, `/clear`, `/status`, `/rename`, `/resume`.
+- **Scheduled Tasks — three levels**:
+  - **`/schedule` (cloud, recommended)**: recurring jobs on Anthropic infrastructure. Run even with laptop closed. Fresh git checkout of the repo each run, commit/push results. No access to local credentials or private services. Ideal for: dependency audit, backlog hygiene, docs drift, automated tests, dead code detection.
+  - **Desktop Scheduled Tasks**: persistent jobs in Claude Code Desktop. Full access to local files, MCP, CLI, credentials. Survive restarts, catch up over 7 days on wake. Ideal for: infra health checks requiring credentials (AWS, GCP), tasks requiring local services.
+  - **`/loop` (session, ephemeral)**: polling within the current session. Dies when the session closes. Auto-expires after 3 days. Ideal for: monitoring an ongoing deploy, babysitting a PR, one-off checks.
+
+  Selection rule: if the job only needs the repo → `/schedule` cloud. If it needs local credentials → Desktop. If it's one-off → `/loop`.
+- **Channels** (research preview): connects Discord or Telegram to a Claude Code session via MCP (`--channels plugin:telegram@claude-plugins-official`). Allows commanding Claude Code from your phone. Telegram recommended for personal ops use (private channel), Discord for client-facing.
+- **Playground** (`/plugin install playground@claude-plugins-official`): generates standalone interactive HTML files. Useful for visualizing architecture, brainstorming layouts, or tweaking components. Relevant during sprint planning and review for projects with a frontend.
+
+---
+
+## 4. The 5 Universal Subagents
+
+### Why 5?
+
+Each agent consumes context via its description. Beyond 7 agents, the context budget impacts quality. We define **5 universals** that cover any project type + **2 optional slots** for specific needs.
+
+### Capitalization: The Dual Mechanism
+
+`tasks/lessons.md` is the **main capitalization mechanism**. Structured, versioned, read by each skill at the start of every phase. It's the project's explicit memory.
+
+In addition, agents with `memory: project` accumulate organic context between sessions — recognized patterns, typical errors, past decisions. This dual mechanism (explicit + organic) reinforces itself and will gain in power with Anthropic updates.
+
+### The 5 Agents and Their Configuration
+
+| Agent | Domain | Model | Model Justification |
+|-------|--------|-------|---------------------|
+| `architect` | System design, technical planning, architecture | Opus | Complex reasoning, few invocations |
+| `code-reviewer` | Code quality, conventions, perf, readability | Opus | Maximum rigor on reviews |
+| `security-auditor` | Application security, vulnerabilities, pentesting | Opus | Adversarial reasoning |
+| `ops-engineer` | CI/CD, infra, deploy, monitoring, costs | Sonnet | Often procedural tasks |
+| `qa-tester` | Test strategy, edge cases, regression | Sonnet | High volume, moderate complexity |
+
+> **Quota-saving mode**: Opus for `architect` + `security-auditor`, Sonnet for the other 3. Adjust based on your consumption.
+
+All agents have `memory: project` enabled.
+
+#### `architect`
+
+Invoked during sprint planning and structural technical decisions. Produces plans, challenges approaches, evaluates trade-offs. The `/sprint-plan` skill relies on it. Tools: Read, Grep, Glob, Bash (read-only recommended).
+
+#### `code-reviewer`
+
+Invoked during the review phase. Reviews like a senior staff engineer. Knows project conventions via CLAUDE.md and rules. Tools: Read, Grep, Glob (read-only — it reviews, it doesn't fix).
+
+#### `security-auditor`
+
+Invoked during the red team phase. We do NOT tell it what to look for — we give it scope and business context, it attacks freely. Its memory means the more it audits the project, the better it knows the attack surfaces and past security decisions. Tools: Read, Grep, Glob, Bash (sandboxed).
+
+#### `ops-engineer`
+
+Invoked for CI/CD, Dockerfiles, Terraform, monitoring, cost optimization. Covers DevOps, SRE and FinOps. Tools: Read, Grep, Glob, Bash, Edit.
+
+#### `qa-tester`
+
+Invoked after the build and during review. Doesn't just run existing tests — identifies missing edge cases, regression scenarios, fragile areas. Tools: Read, Grep, Glob, Bash, Edit, Write.
+
+### The 2 Optional Slots
+
+Reserved for project-specific agents: `ml-engineer`, `data-architect`, `ui-designer`, `api-designer`... Only create an optional agent when the need is proven after 2-3 sprints — not "just in case".
+
+---
+
+## 5. The Sprint Cycle
+
+### Sprint Types
+
+Not everything warrants the full cycle. Before starting, choose the right type:
+
+| Type | Phases | When to Use |
+|------|--------|-------------|
+| **Hotfix** | `/build` → deploy | Prod bug, < 3 files, urgent |
+| **Normal** | `/sprint-plan` → `/build` → `/review` → `/fix` → `/capture-lessons` | Standard feature sprint, 1-2 days |
+| **Security** | `/sprint-plan` → `/build` → `/review` → `/fix` → `/red-team` → `/capture-lessons` | Pre-release, changes to auth/billing/sensitive data |
+
+The **security sprint** is the full cycle. The **normal sprint** skips the red team. The **hotfix** is a fast-track build → deploy. Adapt the process to the stakes, not the other way around.
+
+### Overview (Security Sprint — Full Cycle)
+
+```
+  /sprint-plan  →  /build  →  /review  →  /fix  →  /red-team  →  /capture-lessons
+       │              │            │           │          │              │
+    Human:         Human:      Human:      Human:     Human:         Human:
+    validates      validates   triages     validates  validates      validates
+    the plan       the build   issues      the fixes  security       the retro
+                                                      report
+```
+
+**What the human does**: invoke the skill (`/name`) + validate/adjust the result.
+**What the skill does**: everything else.
+
+### Context Management — Concrete Rules
+
+Context is the most critical resource. Here are the rules:
+
+- **One sprint = one session per phase.** Not one mega-session spanning build + review + fix. Handoff between phases goes through files in `tasks/sprints/sprint-XX/` — skills automatically read the previous phase's file.
+- **Monitor**: `/context` to see usage.
+- **If the build exceeds ~60% of context**: compact (`/compact`) or split into 2 sessions with intermediate handoff via `build-output.md`.
+- **Recommended max sprint size**: 5-8 modified files. Beyond that, split into subtasks with separate sessions.
+- **New session = clean context.** This is intentional: a review session without build context produces a more critical review.
+- **Name sessions**: `/rename sprint-03-build-auth` to retrieve via `/resume`.
+
+The "60% rule" comes from empirical community feedback (not from official Anthropic docs). In practice: beyond that, quality degrades. Skills handle compaction automatically, but stay vigilant.
+
+### Prompt Caching — Why It Matters
+
+CLAUDE.md, rules, and tool definitions are cached by Claude Code's prompt cache. Every modification to CLAUDE.md invalidates the cache for ALL active sessions in the project. That's why we only modify CLAUDE.md for vision or stack changes, never for tactical adjustments. For routine adjustments: `rules/` (scoped by path) or `tasks/lessons.md` (read at the start of each phase by every skill).
+
+**Compact vs Clear**: within a phase, always `/compact` — it preserves the prefix cache (system prompt, tools, CLAUDE.md). Between two sprint phases, `/clear` or new session — fresh context is intentional (a review must not be biased by the build). The cost of cache rebuild is the price of quality.
+
+**Never switch models mid-session.** The prompt cache is unique per model. Switching from Opus to Haiku mid-session rebuilds the entire cache — it's more expensive than staying on Opus. To use a different model, go through a subagent (that's what our agents do with model: sonnet).
+
+### Phase 1 — Sprint Planning
+
+```
+Human types: /sprint-plan
+```
+
+**What the skill does automatically:**
+1. Reads `tasks/backlog.md`, `tasks/lessons.md`, and the latest retrospective
+2. Switches to plan mode (read-only)
+3. Invokes the `architect` subagent to analyze and propose a plan
+4. Produces a structured plan: tasks, acceptance criteria, dependencies, risks
+5. Self-challenges: plays devil's advocate, identifies weaknesses and alternatives
+6. Saves `tasks/sprints/sprint-XX/plan.md`
+
+**What the human does:**
+- Reads the plan, adjusts if needed, validates
+
+**What if I don't have the expertise to challenge the plan?** The skill encodes self-challenge (step 5). The `architect` agent has memory of previous sprints — it flags inconsistencies. And the review phase catches what planning missed. The plan doesn't need to be perfect.
+
+### Phase 2 — Build
+
+```
+Human types: /build
+```
+
+**What the skill does automatically:**
+1. Reads the sprint plan and `tasks/lessons.md`
+2. For each task: evaluates complexity, plan mode if > 3 files, implements, tests
+3. If Agent Teams available and tasks parallelizable: parallelizes (frontend + backend + tests). Otherwise: sequential — the result is the same, the speed changes.
+4. Manages context: compacts if needed, flags if a session split is recommended
+5. Saves `tasks/sprints/sprint-XX/build-output.md`
+6. Signals "build complete"
+
+**What the human does:**
+- Waits for the notification, checks the build-output, validates
+
+> The `Stop` hook guarantees Claude won't declare "done" without tests passing.
+
+### Phase 3 — Review
+
+```
+Human types: /review
+```
+
+**What the skill does automatically:**
+1. Reads `build-output.md`
+2. Launches the review:
+   - **By default**: `code-reviewer` subagent + `qa-tester` subagent sequentially
+   - **If Agent Teams available**: parallelizes code-reviewer + qa-tester + security-auditor (first scan)
+3. Consolidates into `tasks/sprints/sprint-XX/review-output.md`, classified by severity (critical → suggestion)
+
+**What the human does:**
+- Reads the review-output, triages (fix / defer / ignore), validates
+
+### Phase 4 — Fix
+
+```
+Human types: /fix
+```
+
+**What the skill does automatically:**
+1. Reads `review-output.md` (triaged by the human)
+2. Fixes issues marked "to fix" — plan mode if fix is complex, tests each fix
+3. Saves `tasks/sprints/sprint-XX/fix-output.md`
+
+**What the human does:**
+- Checks the fix-output, validates
+
+### Phase 5 — Red Team *(security sprint only)*
+
+```
+Human types: /red-team
+```
+
+**What the skill does automatically:**
+1. Reads the plan and build-output for scope and business context
+2. Invokes `security-auditor` in sandbox
+3. The agent attacks freely — no checklist, no directives. It has its expertise, its memory, the context. It's a pentester, we give it scope.
+4. Produces `tasks/sprints/sprint-XX/redteam-output.md` classified by criticality
+5. Immediately fixes critical vulnerabilities
+6. Adds minor ones to the backlog
+
+**What the human does:**
+- Reads the report, validates critical fixes, decides on treatment of minor ones
+
+### Phase 6 — Ship & Capture
+
+```
+Human types: /capture-lessons
+```
+
+**What the skill does automatically:**
+1. Creates the PR with a description based on sprint artifacts
+2. Updates `tasks/lessons.md` with learnings
+3. Generates `tasks/sprints/sprint-XX/retrospective.md`
+4. Updates `tasks/backlog.md`
+
+**What the human does:**
+- Reviews the retro, merges the PR, moves to the next sprint
+
+### What Is Encoded and Where
+
+Best practices aren't advice — they're in the code:
+
+| Best Practice | Encoded In |
+|--------------|------------|
+| Plan mode before coding if complex | Skill `/build` (internal logic) |
+| Mandatory tests before "done" | Hook `Stop` |
+| Linter after every modification | Hook `PostToolUse` |
+| Read lessons at start of phase | Every skill (first instruction) |
+| No dangerous commands | Hook `PreToolUse` + Sandbox |
+| Mandatory cross-review | Convention in CLAUDE.md |
+| Prove it works | Hook `Stop` + Hook `SubagentStop` |
+
+---
+
+## 6. Scheduled tasks
+
+Scheduled tasks are passive automations that run alongside the sprint cycle.
+They do not replace any workflow phase — they provide monitoring, alerting,
+and housekeeping between sprints.
+
+Two mechanisms:
+- **Desktop (Cowork)**: Durable tasks that survive restarts. For monitoring,
+  reports, and maintenance. Set up via Claude Desktop > Cowork > Scheduled.
+- **CLI `/loop`**: Session-scoped tasks for ad hoc monitoring (e.g., waiting
+  for a CI pipeline). Not standardized — use when needed.
+
+### Standard tasks
+
+| Task | Frequency | Purpose |
+|------|-----------|---------|
+| Health Monitor | Every 3h | Infrastructure health, alarms, costs |
+| Dependency Watch | 2x/day (9h, 18h) | CVE scanning contextualized to project |
+| Daily Brief | Daily 9h | 24h summary: commits, CI, backlog |
+| Weekly Retro | Friday 17h | Sprint recap, lessons, metrics |
+| Docs Drift Check | Weekly | Doc/code coherence verification |
+| Backlog Hygiene | Weekly | Stale items, duplicates, cleanup |
+| Monthly Report | 1st of month | Velocity, costs, trends, tech debt |
+| Deploy Validation | On-demand | Post-deploy smoke test |
+
+### Setup
+
+Each task is a Cowork scheduled task. Prompts are in
+`docs/scheduled-tasks-prompts.md`. To set up:
+
+1. Open Claude Desktop > Cowork > Scheduled > New task
+2. Copy the prompt for the desired task
+3. Set the frequency
+4. Save
+
+Tasks adapt to the project automatically by reading `tasks/backlog.md`,
+`tasks/lessons.md`, and project configuration files.
+
+### Alerting philosophy
+
+- Health Monitor and Dependency Watch are the two critical tasks.
+- They alert only on actionable findings (not noise).
+- Dependency Watch contextualizes CVEs to the project's actual code usage.
+- Other tasks produce reports — no alerting, read when convenient.
+
+### Monitoring data centralization
+
+All monitoring outputs converge to the git repo as source of truth:
+
+- Cloud scheduled tasks (`/schedule`) commit directly to `monitoring/`
+- Desktop scheduled tasks write locally to `monitoring/`, pushed periodically
+- GitHub Actions write to `monitoring/` via CI
+
+A simple `git pull` gives you the complete monitoring state. This enables
+the remote ops workflow: from Telegram, ask Claude Code to read `monitoring/`
+and summarize the current status.
+
+To get a monitoring briefing from Telegram:
+```
+Read monitoring/ and tasks/backlog.md. Give me a 5-line status:
+- Any critical alerts?
+- Last dependency scan result?
+- Any new backlog items from automated scans?
+- Overall project health?
+```
+
+---
+
+### Remote sprint execution
+
+With Channels (Telegram/Discord), the full sprint cycle can be operated from a phone while the Mac runs Claude Code at home.
+
+**Setup (one-time):**
+- Mac running, Claude Desktop open
+- Telegram plugin installed and configured
+- Claude Code launched with `--channels plugin:telegram@claude-plugins-official`
+- Working directory set to the project
+
+**The pattern:**
+Each command via Telegram triggers Claude Code on the Mac. Between phases, send `/clear` to reset context (the CLAUDE.md and rules reload automatically). The handoff between phases goes through files in `tasks/sprints/sprint-XX/` — exactly like separate sessions.
+
+```
+Phone (Telegram)                    Mac (Claude Code)
+────────────────                    ─────────────────
+"Launch /sprint-plan, module X" →   New session, produces plan.md
+                                 ←   Short summary via Telegram
+"Validated. /clear then /build" →   Clear context, build, tests
+                                 ←   "Build done. 4/4, tests pass."
+"/clear then /review"           →   Fresh review, subagents
+                                 ←   "2 critical, 1 major. Details: [...]"
+"Fix critical+major. /clear     →   Fix, tests, PR
+ then /fix"                      ←   "PR #42 ready."
+Merge on GitHub mobile
+"/clear then /capture-lessons"  →   Retro, lessons, backlog updated
+                                 ←   "Sprint complete."
+```
+
+**Quality considerations:** The build and review are as good remotely as locally — Claude is autonomous in each phase, hooks enforce tests. The only trade-off is triage decisions based on summaries instead of full files. Ask for details when needed: "explain finding #3 in detail". Each skill has a Channel mode section that sends a short summary (5-10 lines) via the Channel after completion, with the full output in the sprint file as usual.
+
+### Three modes of operation
+
+A solo dev with a project in production has three distinct situations:
+
+| Mode | When | How |
+|------|------|-----|
+| **Build** | At the desk, building | Standard sprint cycle, nothing changes |
+| **Surveillance** | Away from desk, project running | Scheduled tasks monitor, Dispatch notifies |
+| **Intervention** | Problem detected or want to advance remotely | Telegram → Claude Code via Channels |
+
+Activate based on your stage: Build mode from day one. Surveillance mode at launch. Intervention mode when you're no longer full-time on the project.
+
+### Mac persistent setup
+
+For remote ops to work, the Mac must stay awake when the lid is closed
+or the screen locks. Two tools handle this:
+
+**Amphetamine** (free, Mac App Store): prevents sleep with fine-grained
+control. Create two triggers:
+- "Mac Home": activates when power adapter connected, indefinitely,
+  closed-display sleep OFF
+- "Mac Ext": activates when power adapter disconnected, indefinitely,
+  closed-display sleep OFF, battery cutoff at 15-20%
+
+**tmux + watchdog**: keeps Claude Code sessions alive and auto-restarts
+them if they die.
+
+Setup script and detailed instructions: `docs/mac-persistent-setup.md`
+
+Quick reference:
+- `claude-ops` — start Telegram session in tmux
+- `claude-status` — check everything is running
+- `claude-kill` — stop all sessions
+- `claude-attach-ops` — connect to the ops session
+
+---
+
+## 7. Working as a Pair
+
+### The Model: Split by Feature, Cross-Review
+
+```
+Sprint with 4 tasks:
+  Engineer A → Task 1 + Task 3
+  Engineer B → Task 2 + Task 4
+  Each runs the full cycle. Review and red team are cross-assigned.
+```
+
+### Breakdown by Phase
+
+| Phase | Mode | Who Does What |
+|-------|------|---------------|
+| Sprint Planning | **Sync** | Together: decide tasks and assignment |
+| Build | **Async** | Each builds their features, on their branch |
+| Review | **Async cross** | A reviews B's code, B reviews A's code |
+| Fix | **Async** | Each fixes their own issues |
+| Red Team | **Async cross** | A red-teams B, B red-teams A |
+| Ship & Capture | **Sync** | Joint validation, merge, retro |
+
+### The Absolute Rule
+
+**You NEVER review your own code.** The fresh perspective of the other person is the value of working as a pair.
+
+### Naming Convention
+
+Prefix artifacts in `tasks/sprints/sprint-XX/` to avoid collisions:
+
+```
+a-build-output-auth.md       b-build-output-api.md
+b-review-of-a-auth.md        a-review-of-b-api.md
+```
+
+### Synchronization
+
+Everything is in git. CLAUDE.md, agents, skills, rules, lessons → versioned, shared. CLAUDE.local.md, settings.local.json → gitignored, personal.
+
+---
+
+## 8. Bootstrapping a New Project
+
+### What You Do Once
+
+```bash
+# 1. Clone the template
+cp -r path/to/template-workflow/ my-new-project/
+cd my-new-project/ && git init
+
+# 2. Launch Claude Code and verify
+claude
+> /init           # Bootstrap CLAUDE.md
+> /doctor         # Check config
+> /context        # Check context usage
+```
+
+### What the Template Contains
+
+```
+template-workflow/
+├── .claude/
+│   ├── CLAUDE.md               # To customize
+│   ├── settings.json           # Pre-configured hooks
+│   ├── agents/                 # 5 ready-to-use agents
+│   ├── skills/                 # 6 cycle skills
+│   └── rules/general.md       # Base conventions
+├── tasks/
+│   ├── backlog.md              # Empty, to fill
+│   ├── lessons.md              # Empty, fills up over time
+│   └── sprints/
+├── .gitignore
+└── docs/WORKFLOW.md            # This document
+```
+
+### Customize at the Start of the Project
+
+| File | What to Do |
+|------|-----------|
+| `.claude/CLAUDE.md` | Product vision, stack, critical conventions |
+| `.claude/rules/general.md` | Code conventions (naming, patterns) |
+| `.claude/rules/` | Add scoped subdirectories if needed |
+| `tasks/backlog.md` | Initial product backlog |
+
+The agents and cycle skills **work out of the box** at startup.
+
+### Create or Modify During the Project
+
+| What | When |
+|------|------|
+| **New skill** | Task done > 2 times manually → `/skill-creator` |
+| **Optional agent** (6th/7th) | Proven need after 2-3 sprints, not "just in case" |
+| **New scoped rule** | New code area with specific conventions |
+| **Additional hook** | Recurring problem requiring a deterministic guarantee |
+| **CLAUDE.md** | When the vision or stack evolves. Rarely. |
+| **lessons.md** | After every sprint (automated) + after every significant human correction |
+
+### What You Don't Touch
+
+The cycle skills should not be modified during a project. If a skill isn't working well, the problem is usually in CLAUDE.md (insufficient context) or rules (missing conventions). Exception: recurring failure pattern after several sprints → thoughtful adjustment.
+
+---
+
+## 9. FAQ
+
+### Why no autonomous orchestrator between phases?
+
+Autonomous orchestrators drift. By sprint 3, the orchestrator starts skipping steps or validating insufficient reviews. The human between each phase costs 30 seconds and saves hours of technical debt.
+
+### Why separate sessions per phase?
+
+Build context biases the review — Claude "knows" why the code is the way it is and will be less critical. Separate sessions = fresh perspective. Handoff goes through files in `tasks/sprints/`.
+
+### Why 100 lines max for CLAUDE.md?
+
+Beyond ~150 lines, Claude skims. CLAUDE.md is an executive summary. Details go in rules (scoped), skills (progressive), and agents (specialized).
+
+### Why not put everything in CLAUDE.md?
+
+Because it loads for ALL sessions. A backend convention has no business in the frontend context. Rules with path scoping solve this.
+
+### Why not micro-manage the red team?
+
+A pentester gets scope and context, not a checklist of attacks. The subagent has its expertise and its memory. Dictating what to look for biases the audit toward what you already know. The value of an audit comes from what you did NOT expect.
+
+### When to create a new skill?
+
+When you do the same thing manually more than twice. Claude itself can suggest it if it's in its CLAUDE.md instructions.
+
+---
+
+## 10. Glossary
+
+| Term | Definition |
+|------|-----------|
+| **Agent Team** | Multiple coordinated Claude Code instances (lead + teammates) |
+| **Compaction** | Automatic summarization of a conversation to free up context |
+| **Handoff** | Context transfer between two phases via a structured file |
+| **Hook** | Code automatically executed at a lifecycle point |
+| **Plan mode** | Read-only mode — Claude analyzes without modifying |
+| **Progressive disclosure** | On-demand loading — only the frontmatter is permanent |
+| **Rule** | Auto-loaded convention file, scopable by path |
+| **Sandbox** | OS isolation for Bash commands |
+| **Skill** | Automated workflow, invocable via `/name` |
+| **Subagent** | Specialized Claude instance with its own context and memory |
+| **Worktree** | Isolated copy of the git repo for parallel work |

@@ -1,0 +1,48 @@
+# Claude Code — personal config (not shared)
+.claude/CLAUDE.local.md
+.claude/settings.local.json
+
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Monitoring — local temp files only
+monitoring/*.tmp
+monitoring/*.log
