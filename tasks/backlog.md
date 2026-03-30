@@ -3,7 +3,6 @@
 > Last updated: [date]
 
 ## High priority
-
 <!-- Item format:
 
 ### [Short title]
@@ -15,9 +14,7 @@
 -->
 
 ## Medium priority
-
 ## Low priority
-
 ## Icebox
 
 <!-- Items to keep in mind but not yet planned.

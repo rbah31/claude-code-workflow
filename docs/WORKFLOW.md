@@ -216,6 +216,19 @@ Usage in our workflow: **intra-phase** parallelism (3 simultaneous reviewers dur
   - **`/loop` (session, ephemeral)**: polling within the current session. Dies when the session closes. Auto-expires after 3 days. Ideal for: monitoring an ongoing deploy, babysitting a PR, one-off checks.
 
   Selection rule: if the job only needs the repo → `/schedule` cloud. If it needs local credentials → Desktop. If it's one-off → `/loop`.
+- **`--bare` flag**: Skips CLAUDE.md, settings, and MCP loading for
+  faster startup. Use with `claude -p` for automated/orchestrated
+  sessions where context is passed explicitly.
+- **`--add-dir` flag**: Gives Claude access to additional directories.
+  Use when working across multiple repos or referencing external
+  projects. Also available as `/add-dir` during a session.
+- **`--agent` flag**: Starts Claude Code as a specific agent defined
+  in `.claude/agents/`. Example: `claude --agent=strategic-pm` launches
+  a dedicated strategic partner session with the right system prompt
+  and tools.
+- **`/voice` command**: Voice input mode. Hold spacebar to speak in CLI.
+  Useful for end-of-day debriefs, describing problems verbally, or
+  hands-free interaction during debugging sessions.
 - **Channels** (research preview): connects Discord or Telegram to a Claude Code session via MCP (`--channels plugin:telegram@claude-plugins-official`). Allows commanding Claude Code from your phone. Telegram recommended for personal ops use (private channel), Discord for client-facing.
 - **Playground** (`/plugin install playground@claude-plugins-official`): generates standalone interactive HTML files. Useful for visualizing architecture, brainstorming layouts, or tweaking components. Relevant during sprint planning and review for projects with a frontend.
 

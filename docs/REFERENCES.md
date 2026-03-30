@@ -49,6 +49,30 @@ Engineering insights and best practices that informed this workflow.
   Context management strategies for long-running agents.
   https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
 
+### Claude Code CLI tips (Boris Cherny, Claude Code team)
+
+Source: https://x.com/bcherny (March 2026 thread)
+
+- **`--bare`**: Skip CLAUDE.md/settings/MCP scan for faster SDK startup
+  (up to 10x). Use for non-interactive `claude -p` calls where you
+  explicitly specify what to load. Useful for automated orchestration.
+
+- **`--add-dir`**: Give Claude access to additional folders beyond the
+  working directory. Use when working across multiple repositories or
+  when a companion project needs to see another repo.
+
+- **`--agent`**: Launch Claude Code with a custom system prompt and
+  tools from .claude/agents/. Run `claude --agent=<name>` to start
+  a session as a specific agent. Enables dedicated agent sessions
+  (e.g., strategic partner, debugger).
+
+- **`/voice`**: Enable voice input. Hold spacebar to speak instead of
+  type. Works in CLI (spacebar), Desktop (voice button), and iOS
+  (dictation settings). Useful for end-of-day journals and debriefs.
+
+Documentation: https://code.claude.com/docs/en/cli
+Subagents: https://code.claude.com/docs/en/sub-agents
+
 ## Claude Code documentation
 
 - Channels (Telegram/Discord): https://code.claude.com/docs/en/channels
