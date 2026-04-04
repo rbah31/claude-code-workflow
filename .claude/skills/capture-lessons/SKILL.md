@@ -77,7 +77,46 @@ Look for lessons in:
 - Build blockers (what slowed us down?)
 - Things that went well (what should we keep doing?)
 
-## Step 4 — Update documentation
+## Step 4 — Review workflow configuration
+
+Based on the sprint findings, evaluate whether hooks, rules, or agent
+prompts should be updated. Look for:
+
+**Hooks** — patterns that need deterministic enforcement:
+- A bug class found 2+ times across sprints → add a hook to prevent it
+- A check that reviewers keep flagging manually → automate as hook
+- Example: "tests always missing on new routes" → PostToolUse hook
+  that checks for corresponding test file
+
+**Rules** — conventions that should be encoded:
+- A convention agreed upon during this sprint → add to the relevant
+  rule file in `.claude/rules/`
+- A new code area with specific patterns → create a scoped rule
+- Example: "all API responses must use `{ data, error }`" → add to `rules/backend/api.md`
+
+**Agent prompts** — expertise that should be remembered:
+- A finding pattern the agent should watch for → update agent description
+  or "what you look for" section
+- A false positive the agent keeps raising → add to "what you don't do"
+- Example: security-auditor keeps missing rate limiting → add to its
+  attack checklist
+
+**Skills** — workflow steps that should evolve:
+- A manual step done 2+ times this sprint → create a skill
+- A skill that produced poor results → note in retrospective for review
+
+For each proposed change:
+1. State what triggered it (which finding, which sprint)
+2. State the specific change (which file, what to add/modify)
+3. Apply the change directly
+
+Save proposed and applied changes in the retrospective under a new
+section "## Workflow updates applied".
+
+If no changes are warranted, note "No workflow configuration changes
+needed" and move on.
+
+## Step 5 — Update documentation
 
 Check if the sprint's changes require documentation updates:
 
@@ -96,7 +135,7 @@ For each doc update:
 - If a doc doesn't exist yet but should (e.g., API reference after adding
   5+ endpoints), create a skeleton and add "flesh out docs" to the backlog.
 
-## Step 5 — Generate the retrospective
+## Step 6 — Generate the retrospective
 
 Save to `tasks/sprints/sprint-XX/retrospective.md`:
 
@@ -125,16 +164,20 @@ Save to `tasks/sprints/sprint-XX/retrospective.md`:
 ## Documentation updated
 - [file] — [what was updated and why]
 - or "No doc changes needed this sprint"
+
+## Workflow updates applied
+- [hook/rule/agent/skill] — [what changed and what triggered it]
+- or "No workflow configuration changes needed"
 ```
 
-## Step 6 — Update the backlog
+## Step 7 — Update the backlog
 
 Update `tasks/backlog.md`:
 - Remove completed items
 - Add deferred items from review and red team
 - Add any new items discovered during the sprint
 
-## Step 7 — Notify and stop
+## Step 8 — Notify and stop
 
 Signal to the human:
 "Sprint XX complete. PR ready, lessons captured, docs updated, retro generated,
@@ -163,6 +206,7 @@ After completing the retrospective, append a summary to `tasks/sprint-history.lo
 This log gives a quick overview of project velocity across sprints.
 
 **STOP. Your deliverables are: PR description, updated lessons.md, updated docs,
-retrospective.md, and updated backlog.md.**
+workflow configuration changes (hooks/rules/agents/skills), retrospective.md,
+and updated backlog.md.**
 Do NOT start the next sprint. The human will open a new session and invoke
 `/sprint-plan` separately.
