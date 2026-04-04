@@ -73,9 +73,17 @@ Source: https://x.com/bcherny (March 2026 thread)
 Documentation: https://code.claude.com/docs/en/cli
 Subagents: https://code.claude.com/docs/en/sub-agents
 
+### Emotion Concepts and Functional Emotions (Anthropic, April 2026)
+
+- **Paper**: https://transformer-circuits.pub/2026/emotions/index.html
+- **Key finding**: Claude has internal representations of emotion concepts that causally influence outputs, including alignment-relevant behaviors (sycophancy, reward hacking). Called "functional emotions."
+- **Relevance for the workflow**: Supports the importance of calm, respectful agent prompts and fresh context between phases (emotional states accumulate in context). Potential future optimization: emotionally calibrated prompts for better reasoning quality.
+- **Status**: Reference only — no workflow changes yet. Revisit when data available to compare prompt styles.
+
 ## Claude Code documentation
 
 - Channels (Telegram/Discord): https://code.claude.com/docs/en/channels
 - Scheduled tasks: https://code.claude.com/docs/en/scheduled-tasks
 - Remote Control: https://code.claude.com/docs/en/remote-control
 - Changelog: https://code.claude.com/docs/en/changelog
+
