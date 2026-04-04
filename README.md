@@ -1,4 +1,4 @@
-# Claude Code Workflow Template v3.2
+# Claude Code Workflow Template v3.3
 
 > A structured sprint workflow for solo developers and small teams
 > using Claude Code. Plan, build, review, fix, ship — with human
@@ -20,13 +20,15 @@ Without structure, three things happen with Claude Code:
 .claude/
 ├── CLAUDE.md                  # Project identity — customize this first
 ├── settings.json              # Hooks (tests, linter, safety guards)
-├── agents/                    # 5 universal subagents
+├── agents/                    # 7 subagents (5 universal + 2 strategic)
 │   ├── architect.md           # System design, planning, trade-offs
 │   ├── code-reviewer.md       # Quality, conventions, maintainability
 │   ├── security-auditor.md    # Vulnerabilities, pentest, attack surface
 │   ├── ops-engineer.md        # CI/CD, infra, deploy, monitoring, costs
 │   ├── ops-monitor.md         # Operations triage, monitoring diagnostics
-│   └── qa-tester.md           # Test strategy, edge cases, regression
+│   ├── qa-tester.md           # Test strategy, edge cases, regression
+│   ├── strategic-pm.md        # Sprint planning, product decisions (Opus)
+│   └── strategic-qa.md        # Sprint review, QA challenge (Opus)
 ├── skills/
 │   ├── sprint-plan/           # /sprint-plan — produces plan.md
 │   ├── build/                 # /build — produces build-output.md
@@ -34,6 +36,9 @@ Without structure, three things happen with Claude Code:
 │   ├── fix/                   # /fix — produces fix-output.md
 │   ├── red-team/              # /red-team — produces attack scripts + report
 │   ├── capture-lessons/       # /capture-lessons — PR, retro, lessons
+│   ├── full-sprint/           # /full-sprint — autonomous end-to-end sprint
+│   ├── smoke-test/            # /smoke-test — post-sprint validation
+│   ├── update-briefs/         # /update-briefs — sync shared memory
 │   ├── product-verification/  # /product-verification — end-to-end QA
 │   ├── data-analysis/         # /data-analysis — metrics, analytics
 │   ├── scaffolding/           # /scaffolding — boilerplate generation
@@ -47,6 +52,16 @@ Without structure, three things happen with Claude Code:
     ├── frontend/components.md # Components, state, accessibility
     ├── security/auth.md       # Crypto, sessions, secrets, input handling
     └── infra/cicd.md          # Pipelines, Docker, deploy, observability
+
+briefs/                        # Strategic shared memory (SP-PM ↔ SP-QA)
+├── direction.md               # Human vision and milestones (you write this)
+├── project-state.md           # Current state — updated after each sprint
+├── sprint-directive.md        # Next sprint "order" — written by SP-PM
+├── decisions-log.md           # Append-only decision audit trail
+├── qa-review.md               # SP-QA findings and verdicts
+├── blockers.md                # Manual actions needed by human
+├── marketing-sync.md          # User-facing changes for comms
+└── weekly-debrief.md          # Auto-generated weekly summary
 
 tasks/
 ├── backlog.md                 # Product backlog — prioritized items
@@ -77,7 +92,7 @@ cd my-project && rm -rf .git && git init
 # Edit tasks/backlog.md — add your first items
 
 # 4. Validate the setup
-bash verify.sh
+bash verify-v33.sh
 
 # 5. Start Claude Code and run your first sprint
 claude
@@ -124,9 +139,38 @@ Each phase runs in its own Claude Code session. The handoff between phases goes 
 - **The human validates between phases.** Claude is autonomous within a phase, not across phases.
 - **Lessons accumulate.** Every skill reads `tasks/lessons.md` at the start. Every sprint adds to it.
 
+## Strategic layer (v3.3)
+
+The strategic layer adds autonomous sprint orchestration on top of the manual cycle. Two strategic agents (SP-PM and SP-QA) operate autonomously, communicate via `briefs/`, and can run multiple sprints without human intervention between them.
+
+```
+Human writes briefs/direction.md
+         ↓
+SP-PM reads direction + backlog → writes sprint-directive.md
+         ↓
+/full-sprint executes all phases (context-isolated claude -p sessions)
+         ↓
+SP-QA reads sprint output → writes qa-review.md
+         ↓
+SP-PM reads qa-review → plans next sprint or escalates to blockers.md
+```
+
+The key design principle: **generator/evaluator separation**. SP-PM never reviews its own sprints. SP-QA never plans. Research shows agents are bad at self-evaluation — structural separation enforces it.
+
+| File | Who writes | Who reads |
+|------|-----------|-----------|
+| `briefs/direction.md` | Human | SP-PM |
+| `briefs/sprint-directive.md` | SP-PM | `/full-sprint`, `/sprint-plan` |
+| `briefs/project-state.md` | SP-PM (via `/update-briefs`) | SP-PM, SP-QA |
+| `briefs/qa-review.md` | SP-QA | SP-PM |
+| `briefs/decisions-log.md` | SP-PM + SP-QA | SP-QA |
+| `briefs/blockers.md` | Any agent | Human |
+
+To start autonomous mode: fill `briefs/direction.md`, then invoke SP-PM (`> what should we build next`).
+
 ## Agents
 
-5 universal agents cover any project type. 2 optional slots for project-specific needs.
+5 universal agents cover any project type. 2 strategic agents orchestrate autonomous sprints. 2 optional slots for project-specific needs.
 
 | Agent | Domain | Model | When invoked |
 |-------|--------|-------|-------------|
@@ -136,6 +180,8 @@ Each phase runs in its own Claude Code session. The handoff between phases goes 
 | `ops-engineer` | CI/CD, infra, deploy, monitoring, costs | Sonnet | Infra changes, deployment |
 | `qa-tester` | Test strategy, edge cases, regression | Sonnet | After build, during review |
 | `ops-monitor` | Operations triage, monitoring diagnostics | Sonnet | Alert processing, status checks |
+| `strategic-pm` | Sprint planning, product decisions, orchestration | Opus | Autonomous sprint execution |
+| `strategic-qa` | Sprint review, QA challenge, quality gate | Opus | Post-sprint validation |
 
 All agents have `memory: project` — they accumulate knowledge across sessions.
 
@@ -158,6 +204,14 @@ Don't create them "just in case." Wait until a real need emerges after 2-3 sprin
 | `/fix` | `fix-output.md` | Triages findings, fixes blocking/major issues, 3-strikes guard |
 | `/red-team` | `redteam-output.md` | Generates executable attack scripts across 10 attack categories |
 | `/capture-lessons` | PR + `retrospective.md` | Updates lessons.md, backlog, creates PR |
+
+### Strategic layer (3 skills — v3.3)
+
+| Skill | Produces | What it does |
+|-------|----------|-------------|
+| `/full-sprint` | Full sprint artifacts | Runs all phases autonomously via `claude -p --bare`, context-isolated |
+| `/smoke-test` | `smoke-test-output.md` | Post-sprint regression check, test suite, health checks |
+| `/update-briefs` | Updated `briefs/` files | Syncs project-state, marketing-sync, blockers, decisions-log |
 
 ### Utility skills (7 optional)
 
@@ -271,10 +325,10 @@ Full references with links in `docs/REFERENCES.md`.
 Run the verification script to validate your setup:
 
 ```bash
-bash verify.sh
+bash verify-v33.sh
 ```
 
-Currently checks 100+ items across all components: file structure, agent frontmatter, skill quality (STOP directives, Gotchas, triggers, memory sections), workflow features (conditional reviewers, compact protection, 3-strikes guard), hooks, and v3.2 additions.
+Checks all components: file structure, agent frontmatter, skill quality (STOP directives, Gotchas, triggers, memory sections), workflow features (conditional reviewers, compact protection, 3-strikes guard), hooks, strategic layer (agents, skills, briefs/ directory).
 
 ## Built with this workflow
 

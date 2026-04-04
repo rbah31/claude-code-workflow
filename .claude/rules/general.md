@@ -47,3 +47,14 @@ runs in its own session. When a skill says STOP:
 - Use rules/ or tasks/lessons.md for mid-sprint adjustments.
 - Within a phase: /compact (preserves cache). Between phases: /clear (fresh context).
 - Never switch models mid-session. Use subagents for different models.
+
+## Strategic layer discipline
+
+When the project uses strategic agents (SP-PM, SP-QA):
+- briefs/ is the shared memory. Always read before acting, always write after deciding.
+- Sprint phases launched via claude -p --bare MUST be separate sessions (context isolation).
+- The PM proposes, the QA challenges. Neither should rubber-stamp the other.
+- Position changes during debate require explicit new reasoning.
+- Maximum 3 debate rounds. If no consensus, escalate to human via blockers.md.
+- Maximum 5 sprints per PM session before mandatory QA review.
+- All decisions go to decisions-log.md. No undocumented decisions.
