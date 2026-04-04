@@ -80,34 +80,27 @@ docs/
 
 ## Quick start
 
-**Step 1 — Copy the template**
-
-Click **"Use this template"** on GitHub (top-right of the repo page) to create your own copy. Then clone it:
+**1. Fork this repo** on GitHub, then clone your fork:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO my-project
-cd my-project
+gh repo fork example/generic --clone
+cd generic
 ```
 
-Or fork + clone if you prefer:
+> No GitHub CLI? Fork via the GitHub UI, then `git clone <your fork URL>`.
+
+**2. Customize for your project:**
+
+- `.claude/CLAUDE.md` — project name, tech stack, conventions *(start here)*
+- `tasks/backlog.md` — your first backlog items
+
+**3. Verify the setup:**
 
 ```bash
-# Fork via GitHub UI, then:
-git clone https://github.com/YOUR_USERNAME/YOUR_FORK my-project
-cd my-project
-```
-
-**Step 2 — Customize**
-
-```bash
-# Edit .claude/CLAUDE.md — your project identity, stack, conventions
-# Edit tasks/backlog.md  — your first items
-
-# Validate the setup
 bash verify-v33.sh
 ```
 
-**Step 3 — Run your first sprint**
+**4. Open Claude Code and plan your first sprint:**
 
 ```bash
 claude
@@ -126,7 +119,7 @@ claude
 
 ### What NOT to customize
 
-The 6 cycle skills work as-is. If a skill misbehaves, the issue is usually in CLAUDE.md (missing context) or rules (missing conventions), not in the skill itself.
+The sprint cycle skills (`/sprint-plan`, `/build`, `/review`, `/fix`, `/red-team`, `/capture-lessons`) work as-is. If a skill misbehaves, the issue is almost always in `CLAUDE.md` (missing project context) or `rules/` (missing conventions) — not in the skill itself.
 
 ## The sprint cycle
 
@@ -156,7 +149,7 @@ Each phase runs in its own Claude Code session. The handoff between phases goes 
 
 ## Strategic layer (v3.3)
 
-The strategic layer adds autonomous sprint orchestration on top of the manual cycle. Two strategic agents (SP-PM and SP-QA) operate autonomously, communicate via `briefs/`, and can run multiple sprints without human intervention between them.
+The strategic layer adds autonomous sprint orchestration on top of the manual cycle. Two strategic agents — **SP-PM** (Strategic Product Manager) and **SP-QA** (Strategic QA) — operate autonomously, communicate via `briefs/`, and can run multiple sprints without human intervention between them.
 
 ```
 Human writes briefs/direction.md
@@ -181,7 +174,7 @@ The key design principle: **generator/evaluator separation**. SP-PM never review
 | `briefs/decisions-log.md` | SP-PM + SP-QA | SP-QA |
 | `briefs/blockers.md` | Any agent | Human |
 
-To start autonomous mode: fill `briefs/direction.md`, then invoke SP-PM (`> what should we build next`).
+**To start autonomous mode:** fill `briefs/direction.md` with your vision, then open Claude Code and say `> what should we build next` — SP-PM takes it from there.
 
 ## Agents
 
@@ -292,10 +285,10 @@ Three modes for working away from your desk:
 ### Sprint from your phone
 
 ```
-Phone (Telegram) → "bilan" → monitoring briefing
-Phone (Telegram) → "fix this: [diagnostic]" → /remote-fix
+Phone (Telegram) → "status"            → /monitoring-briefing
+Phone (Telegram) → "fix this: <error>" → /remote-fix
 Phone (Dispatch) → full sprint phases with validation
-Cloud agents → dependency audit, test health (run autonomously)
+Cloud agents    → dependency audit, test health (run autonomously)
 ```
 
 For persistent sessions on macOS, see `docs/mac-persistent-setup.md`.
