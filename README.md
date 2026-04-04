@@ -80,21 +80,36 @@ docs/
 
 ## Quick start
 
+**Step 1 — Copy the template**
+
+Click **"Use this template"** on GitHub (top-right of the repo page) to create your own copy. Then clone it:
+
 ```bash
-# 1. Clone the template
-git clone https://github.com/example/generic my-project
-cd my-project && rm -rf .git && git init
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO my-project
+cd my-project
+```
 
-# 2. Customize your project identity
-# Edit .claude/CLAUDE.md — add your project vision, stack, conventions
+Or fork + clone if you prefer:
 
-# 3. Fill your initial backlog
-# Edit tasks/backlog.md — add your first items
+```bash
+# Fork via GitHub UI, then:
+git clone https://github.com/YOUR_USERNAME/YOUR_FORK my-project
+cd my-project
+```
 
-# 4. Validate the setup
+**Step 2 — Customize**
+
+```bash
+# Edit .claude/CLAUDE.md — your project identity, stack, conventions
+# Edit tasks/backlog.md  — your first items
+
+# Validate the setup
 bash verify-v33.sh
+```
 
-# 5. Start Claude Code and run your first sprint
+**Step 3 — Run your first sprint**
+
+```bash
 claude
 > /sprint-plan
 ```
