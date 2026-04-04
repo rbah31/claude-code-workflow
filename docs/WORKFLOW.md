@@ -198,29 +198,20 @@ Config: `/hooks` (interactive) or `settings.json`.
 
 ### Hooks and headless mode
 
-The PreToolUse hook uses a prompt-type hook (LLM judge) to evaluate
-bash commands. This works well in interactive mode but blocks headless
-execution (`claude -p`) because the hook requires approval.
+When running `claude -p` (headless mode), use the
+`--dangerously-skip-permissions` flag. Despite its name, the deny-list
+in settings.json still blocks destructive commands.
 
-Two options for headless/automated sprints:
+The PreToolUse hook is configured to approve `claude -p` commands as
+part of the normal sprint workflow (PM agent launching build phases, etc.).
 
-**Option A — Skip permissions (recommended for solo/trusted environments):**
-Use `--dangerously-skip-permissions` with `claude -p`. The deny-list
-in settings.json still blocks destructive commands (rm -rf, DROP TABLE, etc.)
-even with this flag. The prompt-type hooks are bypassed but the command-type
-hooks (linter, tests) still run.
+Quick reference:
+- Interactive (terminal): all hooks active, no flag needed
+- Headless (`claude -p`): add `--dangerously-skip-permissions`
+- PM agent launching sprints: works from within a Claude Code session
 
-**Option B — Separate headless config:**
-Create a `settings.headless.json` that replaces prompt-type hooks with
-command-type hooks (deterministic checks instead of LLM judge). Use
-`CLAUDE_SETTINGS_FILE=settings.headless.json claude -p "..."`.
-
-For most users: start with Option A. The deny-list in settings.json
-is your safety net. Add project-specific dangerous commands to the deny
-list as needed.
-
-Note: `--dangerously-skip-permissions` does NOT bypass the deny-list.
-Commands matching deny patterns are always blocked regardless of flags.
+If a hook blocks a legitimate command, the human copies and runs it
+directly in the terminal as a fallback.
 
 ### Agent Teams — Parallelism
 
