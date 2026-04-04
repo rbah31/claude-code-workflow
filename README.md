@@ -82,7 +82,7 @@ docs/
 
 ```bash
 # 1. Clone the template
-git clone https://github.com/[YOUR_USERNAME]/claude-code-workflow-template.git my-project
+git clone https://github.com/example/generic my-project
 cd my-project && rm -rf .git && git init
 
 # 2. Customize your project identity
