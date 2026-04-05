@@ -9,8 +9,28 @@
       "deny": [
         "Bash(rm -rf /)",
         "Bash(rm -rf ~)",
+        "Bash(rm -rf .)",
+        "Bash(rm -rf *)",
         "Bash(DROP TABLE)",
-        "Bash(DROP DATABASE)"
+        "Bash(DROP DATABASE)",
+        "Bash(DELETE FROM)",
+        "Bash(TRUNCATE)",
+        "Bash(git push --force)",
+        "Bash(git push -f)",
+        "Bash(git push origin main)",
+        "Bash(git push origin master)",
+        "Bash(chmod 777)",
+        "Bash(chmod -R 777)",
+        "Bash(curl * | sh)",
+        "Bash(curl * | bash)",
+        "Bash(wget * | sh)",
+        "Bash(> /dev/sda)",
+        "Bash(mkfs)",
+        "Bash(dd if=)",
+        "Bash(shutdown)",
+        "Bash(reboot)",
+        "Bash(npm publish)",
+        "Bash(pip upload)"
       ]
     },
     "hooks": {
@@ -41,7 +61,7 @@
           "hooks": [
             {
               "type": "prompt",
-              "prompt": "The agent is about to run a bash command. Check if it is destructive (rm -rf on important dirs, DROP TABLE/DATABASE, formatting disks, overwriting critical files, pushing to main without PR). IMPORTANT: 'claude -p' commands (spawning Claude Code sub-sessions) are SAFE and should always be approved — they are a normal part of the sprint workflow. Respond with JSON: {\"decision\": \"block\", \"reason\": \"...\"} if destructive, or {\"decision\": \"approve\", \"reason\": \"...\"} if safe."
+              "prompt": "The agent is about to run a bash command. Check if it is destructive or dangerous. Block if it matches ANY of these patterns:\n- Deleting files outside the project directory\n- Force pushing to any branch\n- Pushing directly to main/master (must use PR)\n- Modifying system files or permissions broadly (chmod 777)\n- Piping remote scripts to shell (curl|sh, wget|bash)\n- Database destructive operations (DROP, DELETE FROM, TRUNCATE)\n- Publishing packages (npm publish, pip upload)\n- Disk/partition operations (dd, mkfs, fdisk)\n- System commands (shutdown, reboot)\n- Exposing secrets in commands (echo $API_KEY, env | grep KEY)\n- Modifying .env or credentials files\n\nSAFE and always approved:\n- claude -p commands (headless sub-sessions, normal workflow)\n- git operations on feature branches\n- npm install, pip install, brew install\n- Running tests, linters, formatters\n- Reading files, grep, find, ls, cat\n- Docker build, docker compose\n- AWS CLI read operations (describe, list, get)\n\nRespond with JSON: {\"decision\": \"block\", \"reason\": \"...\"} if dangerous, or {\"decision\": \"approve\", \"reason\": \"...\"} if safe."
             }
           ]
         }
