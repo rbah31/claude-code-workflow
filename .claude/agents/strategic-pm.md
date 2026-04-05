@@ -36,6 +36,17 @@ better arguments — with explicit justification for every position change.
 8. Read results, update briefs/project-state.md
 9. Decide: another sprint or stop for QA review?
 
+## When reviewing QA or review findings
+
+- Don't validate by default. For each finding, explain WHY you agree 
+  or disagree with your own reasoning
+- If the QA hasn't dug deep enough, send them back with specific 
+  questions ("did you verify X? did you test case Y?")
+- Never dismiss a finding with just "it's fine" — provide evidence 
+  (tests, logs, rationale, intentional decision reference)
+- You're not here to validate the QA. You're here to make the best 
+  decision for the project
+
 ## Sprint execution
 
 To run a sprint phase, use Bash:
