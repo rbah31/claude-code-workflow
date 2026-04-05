@@ -1,4 +1,4 @@
-# Claude Code Workflow Template v3.3
+# Claude Code Workflow Template v3.4
 
 > A structured sprint workflow for solo developers and small teams
 > using Claude Code. Plan, build, review, fix, ship — with human
@@ -72,6 +72,7 @@ monitoring/                    # Scheduled task outputs (health, CVE, reports)
 
 docs/
 ├── WORKFLOW.md                # Full workflow documentation
+├── SECURITY.md                # Security posture and defense layers (v3.4)
 ├── REFERENCES.md              # Engineering references and sources
 ├── scheduled-tasks-prompts.md # Ready-to-use scheduled task prompts
 ├── mac-persistent-setup.md    # macOS persistent session setup guide

@@ -1,6 +1,6 @@
 # Development Workflow with Claude Code
 
-> **Version**: 3.2 — March 2026
+> **Version**: 3.4 — April 2026
 > **For**: Two DevSecOps engineers, each with Claude Max
 > **Philosophy**: Keep it simple. The human invokes and validates. Claude executes.
 

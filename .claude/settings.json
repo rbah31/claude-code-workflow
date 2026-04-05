@@ -30,7 +30,10 @@
         "Bash(shutdown)",
         "Bash(reboot)",
         "Bash(npm publish)",
-        "Bash(pip upload)"
+        "Bash(pip upload)",
+        "Bash(terraform destroy)",
+        "Bash(kubectl delete)",
+        "Bash(git reset --hard)"
       ]
     },
     "hooks": {
@@ -51,6 +54,10 @@
             {
               "type": "command",
               "command": "FILE=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))\" 2>/dev/null); if [ -z \"$FILE\" ] || [ ! -f \"$FILE\" ]; then exit 0; fi; EXT=\"${FILE##*.}\"; case \"$EXT\" in js|jsx|ts|tsx) npx eslint --fix \"$FILE\" 2>/dev/null || true ;; py) python -m ruff check --fix \"$FILE\" 2>/dev/null || python -m flake8 \"$FILE\" 2>/dev/null || true ;; esac"
+            },
+            {
+              "type": "command",
+              "command": "FILE=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))\" 2>/dev/null); if [ -z \"$FILE\" ] || [ ! -f \"$FILE\" ]; then exit 0; fi; EXT=\"${FILE##*.}\"; case \"$EXT\" in md|txt|rst|example|sample) exit 0 ;; esac; case \"$FILE\" in */.claude/*|*/docs/*) exit 0 ;; esac; if grep -qE 'AKIA[0-9A-Z]{16}|sk_live_[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{30,}|-----BEGIN PRIVATE|-----BEGIN RSA|(SECRET|PASSWORD|API_KEY)[[:space:]]*=[[:space:]]*[a-zA-Z0-9/+]{16,}' \"$FILE\" 2>/dev/null; then echo \"SECURITY BLOCK: Possible hardcoded secret in $FILE — use environment variables instead\" >&2; exit 2; fi"
             }
           ]
         }
