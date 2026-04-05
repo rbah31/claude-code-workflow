@@ -39,14 +39,24 @@ evaluation. Cannot be bypassed by any flag or prompt injection.
 | Disk/system | `> /dev/sda`, `mkfs`, `dd if=`, `shutdown`, `reboot` |
 | Publishing | `npm publish`, `pip upload` |
 | Infrastructure | `terraform destroy`, `kubectl delete` |
+| Git untracked | `git clean -f`, `git clean -fd` |
+| Cloud storage | `aws s3 rm` |
+| System scheduling | `crontab -r` |
 
 **Why this is stronger than a terminal:** An open terminal has none of these guards.
 A tired developer or a copy-pasted script can run any of these. The deny-list is
-always on, even at 3am during an automated sprint.
+always on, even at 3am during an automated sprint. (31 patterns total)
 
-### Layer 2 — LLM judge PreToolUse hook
+### Layer 2 — LLM judge PreToolUse hooks
 
-Before each bash command, a prompt-type hook evaluates intent. Explicit block list:
+Two prompt-type hooks evaluate intent before any write or bash command.
+
+**Write/Edit hook** — blocks writes outside the project directory:
+- System files: `/etc/`, `/usr/`, `/System/`
+- User dotfiles: `~/.bashrc`, `~/.zshrc`, `~/.ssh/`
+- Any absolute path not inside the current project
+
+**Bash hook** — evaluates each command for intent. Explicit block list:
 
 - Deleting files outside the project directory
 - Force pushing to any branch
@@ -68,7 +78,8 @@ Explicit safe list (always approved without latency):
 - AWS CLI read operations
 
 **Why this matters:** Catches intent-based threats the deny-list can't pattern-match
-(e.g., a creative way to delete files that doesn't use `rm -rf`).
+(e.g., a creative way to delete files that doesn't use `rm -rf`, or a write
+to `~/.bashrc` that would persist malicious behavior beyond the session).
 
 ### Layer 3 — Deterministic command hooks
 
@@ -135,7 +146,7 @@ are preserved in `tasks/sprints/sprint-XX/`. This means:
 
 | Guard | Open terminal | CI/CD pipeline | Claude headless (v3.4) |
 |-------|--------------|----------------|----------------------|
-| Deny-list (destructive cmds) | ❌ | Partial | ✅ 27 patterns |
+| Deny-list (destructive cmds) | ❌ | Partial | ✅ 31 patterns |
 | LLM intent evaluation | ❌ | ❌ | ✅ |
 | Tests must pass before "done" | ❌ | ✅ | ✅ |
 | Secret scan on every write | ❌ | Optional | ✅ |

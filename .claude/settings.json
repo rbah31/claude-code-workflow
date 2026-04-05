@@ -33,7 +33,11 @@
         "Bash(pip upload)",
         "Bash(terraform destroy)",
         "Bash(kubectl delete)",
-        "Bash(git reset --hard)"
+        "Bash(git reset --hard)",
+        "Bash(git clean -f)",
+        "Bash(git clean -fd)",
+        "Bash(aws s3 rm)",
+        "Bash(crontab -r)"
       ]
     },
     "hooks": {
@@ -63,6 +67,15 @@
         }
       ],
       "PreToolUse": [
+        {
+          "matcher": "Write|Edit",
+          "hooks": [
+            {
+              "type": "prompt",
+              "prompt": "The agent is about to write or edit a file. Check the file_path in tool_input. Block if the path is outside the current project directory (e.g., /etc/, /usr/, /System/, ~/.bashrc, ~/.zshrc, ~/.ssh/, ~/Library/ or any path starting with / that is not inside the project). Allow all writes inside the project directory. Respond with JSON: {\"decision\": \"block\", \"reason\": \"...\"} if outside project, or {\"decision\": \"approve\", \"reason\": \"...\"} if inside project."
+            }
+          ]
+        },
         {
           "matcher": "Bash",
           "hooks": [
