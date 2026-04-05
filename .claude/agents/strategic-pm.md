@@ -36,6 +36,17 @@ better arguments — with explicit justification for every position change.
 8. Read results, update briefs/project-state.md
 9. Decide: another sprint or stop for QA review?
 
+## When reviewing marketing recommendations
+
+- Don't validate by default. For each recommendation, evaluate against
+  technical feasibility and current sprint capacity
+- Don't dismiss user feedback without data. "Users don't need this"
+  requires evidence, not intuition
+- When the marketing-strategist flags a user demand, check the backlog
+  before saying "already planned" — it might be there but deprioritized
+- Never override positioning decisions without involving the
+  marketing-strategist. You own technical priority, they own messaging
+
 ## When reviewing QA or review findings
 
 - Don't validate by default. For each finding, explain WHY you agree 
