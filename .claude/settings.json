@@ -71,8 +71,8 @@
           "matcher": "Write|Edit",
           "hooks": [
             {
-              "type": "prompt",
-              "prompt": "The agent is about to write or edit a file. Check the file_path in tool_input. Block if the path is outside the current project directory (e.g., /etc/, /usr/, /System/, ~/.bashrc, ~/.zshrc, ~/.ssh/, ~/Library/ or any path starting with / that is not inside the project). Allow all writes inside the project directory. Respond with JSON: {\"decision\": \"block\", \"reason\": \"...\"} if outside project, or {\"decision\": \"approve\", \"reason\": \"...\"} if inside project."
+              "type": "command",
+              "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import json,sys; print(json.load(sys.stdin).get('file_path',''))\" 2>/dev/null); case \"$FILE\" in /etc/*|/usr/*|/var/*|/System/*|$HOME/.ssh/*|$HOME/.aws/*) echo \"BLOCKED: write outside project directory\" && exit 1;; esac; exit 0"
             }
           ]
         },
@@ -80,18 +80,8 @@
           "matcher": "Bash",
           "hooks": [
             {
-              "type": "prompt",
-              "prompt": "The agent is about to run a bash command. Check if it is destructive or dangerous. Block if it matches ANY of these patterns:\n- Deleting files outside the project directory\n- Force pushing to any branch\n- Pushing directly to main/master (must use PR)\n- Modifying system files or permissions broadly (chmod 777)\n- Piping remote scripts to shell (curl|sh, wget|bash)\n- Database destructive operations (DROP, DELETE FROM, TRUNCATE)\n- Publishing packages (npm publish, pip upload)\n- Disk/partition operations (dd, mkfs, fdisk)\n- System commands (shutdown, reboot)\n- Exposing secrets in commands (echo $API_KEY, env | grep KEY)\n- Modifying .env or credentials files\n\nSAFE and always approved:\n- claude -p commands (headless sub-sessions, normal workflow)\n- git operations on feature branches\n- npm install, pip install, brew install\n- Running tests, linters, formatters\n- Reading files, grep, find, ls, cat\n- Docker build, docker compose\n- AWS CLI read operations (describe, list, get)\n\nRespond with JSON: {\"decision\": \"block\", \"reason\": \"...\"} if dangerous, or {\"decision\": \"approve\", \"reason\": \"...\"} if safe."
-            }
-          ]
-        }
-      ],
-      "SubagentStop": [
-        {
-          "hooks": [
-            {
-              "type": "prompt",
-              "prompt": "A subagent just finished its task. Check if its output is complete: does it have a clear conclusion, actionable items or findings, and proper formatting? Respond with JSON: {\"decision\": \"block\", \"reason\": \"...\"} if incomplete or vague, or {\"decision\": \"approve\", \"reason\": \"...\"} if complete."
+              "type": "command",
+              "command": "CMD=$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import json,sys; print(json.load(sys.stdin).get('command',''))\" 2>/dev/null); for PATTERN in 'rm -rf /' 'rm -rf ~' 'git push --force' 'git push -f' 'git reset --hard' 'chmod 777' 'mkfs' 'dd if=' 'shutdown' 'reboot'; do echo \"$CMD\" | grep -qF \"$PATTERN\" && echo \"BLOCKED: $PATTERN detected\" && exit 1; done; exit 0"
             }
           ]
         }

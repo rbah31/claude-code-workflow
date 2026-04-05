@@ -1,6 +1,6 @@
 # Security Posture — Claude Code Headless Mode
 
-> **Version**: v3.4
+> **Version**: v3.5
 > **Applies to**: Autonomous sprint execution with `--dangerously-skip-permissions`
 > **Claim**: This mode is safer than an open terminal for the operations it performs.
 
@@ -12,13 +12,11 @@ The flag bypasses **Claude Code's interactive approval prompts** — the dialogs
 that ask "Allow this bash command? [y/n]". It does NOT:
 
 - Bypass the `deny` list in `settings.json` — those patterns are always blocked
-- Bypass command-type hooks (linter, test runner, secret scanner) — those always run
+- Bypass command-type hooks (linter, test runner, secret scanner, PreToolUse guards) — those always run
 - Give Claude access to anything it couldn't already access with your user account
-- Remove the LLM judge PreToolUse evaluation
 
 It's called "dangerous" because it removes the human from each individual command
-approval. The guards below replace that human with deterministic and LLM-based
-controls.
+approval. The guards below replace that human with deterministic controls.
 
 ---
 
@@ -47,39 +45,37 @@ evaluation. Cannot be bypassed by any flag or prompt injection.
 A tired developer or a copy-pasted script can run any of these. The deny-list is
 always on, even at 3am during an automated sprint. (31 patterns total)
 
-### Layer 2 — LLM judge PreToolUse hooks
+### Layer 2 — Deterministic PreToolUse hooks (command-type)
 
-Two prompt-type hooks evaluate intent before any write or bash command.
+Two command-type hooks run a fast, deterministic check before any write or bash
+command. No LLM involved — these are grep/case statements that always produce the
+same result for the same input.
 
-**Write/Edit hook** — blocks writes outside the project directory:
-- System files: `/etc/`, `/usr/`, `/System/`
-- User dotfiles: `~/.bashrc`, `~/.zshrc`, `~/.ssh/`
-- Any absolute path not inside the current project
+**Why command-type, not prompt-type (LLM judge)?**
 
-**Bash hook** — evaluates each command for intent. Explicit block list:
+Prompt-type hooks spawn an LLM call to evaluate intent. In headless mode
+(`claude -p --dangerously-skip-permissions`), this creates a blocking wait that
+can hang for 25+ minutes with no timeout. Command-type hooks run in milliseconds
+and are guaranteed to resolve.
 
-- Deleting files outside the project directory
-- Force pushing to any branch
-- Piping remote scripts to shell
-- Database destructive operations
-- Publishing packages to registries
-- Disk/partition operations
-- Exposing secrets in commands
-- Modifying `.env` or credentials files
+> **For interactive mode:** if you want the LLM judge in addition to these guards,
+> you can re-add prompt-type hooks in `settings.local.json` (gitignored). They will
+> only fire in interactive sessions where a hang is visible and interruptible.
 
-Explicit safe list (always approved without latency):
+**Write/Edit hook** — blocks writes to sensitive system paths:
+- `/etc/`, `/usr/`, `/var/`, `/System/`
+- `~/.ssh/`, `~/.aws/`
 
-- `claude -p` sub-sessions (sprint orchestration)
-- Git operations on feature branches
-- Package installation (`npm install`, `pip install`, `brew install`)
-- Test runners, linters, formatters
-- Read operations (`grep`, `find`, `ls`, `cat`)
-- Docker build / compose
-- AWS CLI read operations
+**Bash hook** — grep-based block on a secondary deny-list:
+`rm -rf /`, `rm -rf ~`, `git push --force`, `git push -f`, `git reset --hard`,
+`chmod 777`, `mkfs`, `dd if=`, `shutdown`, `reboot`
 
-**Why this matters:** Catches intent-based threats the deny-list can't pattern-match
-(e.g., a creative way to delete files that doesn't use `rm -rf`, or a write
-to `~/.bashrc` that would persist malicious behavior beyond the session).
+> Note: this list overlaps intentionally with Layer 1. Defense in depth — the
+> deny-list is the primary safety net; this hook is the secondary check for
+> command variants the runtime might miss.
+
+**Why this matters:** Catches writes and commands that bypass the deny-list pattern
+matcher, without introducing any headless-mode hangs.
 
 ### Layer 3 — Deterministic command hooks
 
@@ -144,10 +140,10 @@ are preserved in `tasks/sprints/sprint-XX/`. This means:
 
 ## Comparison: headless Claude vs alternatives
 
-| Guard | Open terminal | CI/CD pipeline | Claude headless (v3.4) |
+| Guard | Open terminal | CI/CD pipeline | Claude headless (v3.5) |
 |-------|--------------|----------------|----------------------|
 | Deny-list (destructive cmds) | ❌ | Partial | ✅ 31 patterns |
-| LLM intent evaluation | ❌ | ❌ | ✅ |
+| Deterministic PreToolUse hooks | ❌ | ❌ | ✅ no hangs |
 | Tests must pass before "done" | ❌ | ✅ | ✅ |
 | Secret scan on every write | ❌ | Optional | ✅ |
 | Auto-lint on every write | ❌ | Optional | ✅ |
@@ -198,9 +194,10 @@ Be honest about the limits:
    Claude can read and use it. This is intentional (it needs to run the app).
    Scope your environment to only what the sprint needs.
 
-2. **Novel destruction patterns** — the deny-list covers known patterns. A
-   sufficiently creative command might bypass it. The LLM judge is the backstop,
-   but it can be wrong.
+2. **Novel destruction patterns** — the deny-list and PreToolUse hooks cover known
+   patterns. A sufficiently creative command might bypass both. There is no LLM
+   judge backstop by default (removed to fix headless hangs). Activate it in
+   `settings.local.json` for interactive sessions if you want a second opinion.
 
 3. **Exfiltration via legitimate channels** — Claude could theoretically send
    data via `curl` to a legitimate endpoint. Trust the model, audit `briefs/`
