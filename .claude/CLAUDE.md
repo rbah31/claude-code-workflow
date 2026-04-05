@@ -39,10 +39,17 @@ The sprint cycle is encoded in skills. Invoke and validate, don't micro-manage.
 - Handoff between phases via `tasks/sprints/sprint-XX/`
 - Knowledge capital: `tasks/lessons.md` read at the start of each phase
 
+Marketing flow (runs in parallel with dev, not sequentially):
+- Post-sprint: `/marketing-sync` after `/capture-lessons` — marketing adapts to what shipped
+- User feedback: add to `briefs/user-feedback.md` → `/marketing-sync` — PM gets product signal
+- Pre-sprint: `/marketing-sync` (Mode 3) — marketing flags which backlog items have highest user demand
+- PM ↔ marketing communicate via `briefs/` (marketing-context, marketing-directive, user-feedback)
+
 ## Available agents
 
 5 universal agents in `.claude/agents/`: architect, code-reviewer, security-auditor, ops-engineer, qa-tester.
-2 optional slots for project-specific agents. Only create when a real need emerges after 2-3 sprints.
+1 marketing agent: `marketing-strategist` — peer of the PM, owns market direction (positioning, copy, SEO, CRO, user feedback). Uses the `marketingskills` community plugin.
+1 optional slot for a project-specific agent. Only create when a real need emerges after 2-3 sprints.
 
 ## Rules
 
