@@ -82,6 +82,11 @@ compensate. Hooks (Stop, PostToolUse) will NOT fire — the prompt includes
 (slower startup but all guarantees apply). For production, also remove
 `--dangerously-skip-permissions` and configure permissions in settings.json.
 
+**⚠️ `--bare` auth failure**: `--bare` can cause authentication failures in
+some environments. If `claude -p --bare` returns an auth error, remove `--bare`
+and pass CLAUDE.md + skill file content explicitly in the prompt body. Slower
+startup, same result, no auth issues.
+
 ## Non-negotiable rules
 
 - Never start a sprint without writing sprint-directive.md first

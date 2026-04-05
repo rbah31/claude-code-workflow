@@ -250,7 +250,10 @@ Usage in our workflow: **intra-phase** parallelism (3 simultaneous reviewers dur
 - **Sandbox** (`/sandbox`): OS isolation for Bash commands. Used in red team.
 - **Headless Mode** (`claude -p "..."`): non-interactive execution, for CI/CD and scripts.
 - **Plan Mode** (`Shift+Tab` x2): read-only, Claude analyzes without modifying. Sprint planning and complex tasks.
-- **Extended Thinking**: adaptive reasoning. "think hard" or "ultrathink" to force deep reasoning.
+- **Extended Thinking**: adaptive reasoning at higher token cost. Activate with "think hard" or "ultrathink".
+  - **Use for**: architecture decisions, complex multi-file debugging, security analysis, evaluating major trade-offs
+  - **Skip for**: routine implementation, simple bug fixes, content generation — overhead exceeds gain
+  - **Tip**: "think harder about X" targets the reasoning, not just output length
 - **Useful commands**: `/doctor`, `/context`, `/compact`, `/clear`, `/status`, `/rename`, `/resume`.
 - **Scheduled Tasks — three levels**:
   - **`/schedule` (cloud, recommended)**: recurring jobs on Anthropic infrastructure. Run even with laptop closed. Fresh git checkout of the repo each run, commit/push results. No access to local credentials or private services. Ideal for: dependency audit, backlog hygiene, docs drift, automated tests, dead code detection.
@@ -258,9 +261,11 @@ Usage in our workflow: **intra-phase** parallelism (3 simultaneous reviewers dur
   - **`/loop` (session, ephemeral)**: polling within the current session. Dies when the session closes. Auto-expires after 3 days. Ideal for: monitoring an ongoing deploy, babysitting a PR, one-off checks.
 
   Selection rule: if the job only needs the repo → `/schedule` cloud. If it needs local credentials → Desktop. If it's one-off → `/loop`.
-- **`--bare` flag**: Skips CLAUDE.md, settings, and MCP loading for
-  faster startup. Use with `claude -p` for automated/orchestrated
-  sessions where context is passed explicitly.
+- **`--bare` flag**: Skips CLAUDE.md, settings, and MCP loading for faster startup.
+  Use with `claude -p` for automated sessions where context is passed explicitly in the prompt.
+  **⚠️ Known issue**: `--bare` can cause authentication failures in some environments.
+  If you get auth errors, remove `--bare` and pass CLAUDE.md + skill file content explicitly
+  in the prompt instead. Slower startup, same result, no auth issues.
 - **`--add-dir` flag**: Gives Claude access to additional directories.
   Use when working across multiple repos or referencing external
   projects. Also available as `/add-dir` during a session.
@@ -273,6 +278,7 @@ Usage in our workflow: **intra-phase** parallelism (3 simultaneous reviewers dur
   hands-free interaction during debugging sessions.
 - **Channels** (research preview): connects Discord or Telegram to a Claude Code session via MCP (`--channels plugin:telegram@claude-plugins-official`). Allows commanding Claude Code from your phone. Telegram recommended for personal ops use (private channel), Discord for client-facing.
 - **Playground** (`/plugin install playground@claude-plugins-official`): generates standalone interactive HTML files. Useful for visualizing architecture, brainstorming layouts, or tweaking components. Relevant during sprint planning and review for projects with a frontend.
+- **Auto Dream**: background memory consolidation for agents. Enable via `/memory` — once active, runs automatically between sessions. Agents accumulate project context organically (recognized patterns, recurring errors, past decisions) without explicit session work. Complements `tasks/lessons.md` (structured, human-readable) with agent-native organic memory.
 
 ---
 
@@ -344,8 +350,9 @@ Not everything warrants the full cycle. Before starting, choose the right type:
 | **Hotfix** | `/build` → deploy | Prod bug, < 3 files, urgent |
 | **Normal** | `/sprint-plan` → `/build` → `/review` → `/fix` → `/capture-lessons` | Standard feature sprint, 1-2 days |
 | **Security** | `/sprint-plan` → `/build` → `/review` → `/fix` → `/red-team` → `/capture-lessons` | Pre-release, changes to auth/billing/sensitive data |
+| **Autonomous** | `/full-sprint` or `claude --agent=strategic-pm` | PM chains all phases unattended. Human validates final output only. Prerequisite: 3+ successful manual sprints. |
 
-The **security sprint** is the full cycle. The **normal sprint** skips the red team. The **hotfix** is a fast-track build → deploy. Adapt the process to the stakes, not the other way around.
+The **security sprint** is the full cycle. The **normal sprint** skips the red team. The **hotfix** is a fast-track build → deploy. The **autonomous sprint** delegates orchestration to the PM agent — use only after the manual cycle is well understood and the project has history in `tasks/lessons.md`. Adapt the process to the stakes, not the other way around.
 
 ### Overview (Security Sprint — Full Cycle)
 
@@ -381,6 +388,8 @@ CLAUDE.md, rules, and tool definitions are cached by Claude Code's prompt cache.
 **Compact vs Clear**: within a phase, always `/compact` — it preserves the prefix cache (system prompt, tools, CLAUDE.md). Between two sprint phases, `/clear` or new session — fresh context is intentional (a review must not be biased by the build). The cost of cache rebuild is the price of quality.
 
 **Never switch models mid-session.** The prompt cache is unique per model. Switching from Opus to Haiku mid-session rebuilds the entire cache — it's more expensive than staying on Opus. To use a different model, go through a subagent (that's what our agents do with model: sonnet).
+
+**Never add or remove tools mid-session.** Tool definitions are part of the cached prefix — the same rule as model changes. Adding or removing an MCP server, changing permissions, or modifying tool availability while a session is running invalidates the cache. For tool changes: open a new session.
 
 ### Phase 1 — Sprint Planning
 
@@ -704,6 +713,28 @@ Merge on GitHub mobile
 
 **Quality considerations:** The build and review are as good remotely as locally — Claude is autonomous in each phase, hooks enforce tests. The only trade-off is triage decisions based on summaries instead of full files. Ask for details when needed: "explain finding #3 in detail". Each skill has a Channel mode section that sends a short summary (5-10 lines) via the Channel after completion, with the full output in the sprint file as usual.
 
+### Permission Relay — Approving Permissions Remotely
+
+When `--dangerously-skip-permissions` is not acceptable (compliance requirements, shared environments), the Channels plugin offers an alternative: **permission relay via Telegram or Discord**.
+
+When Claude Code encounters a permission prompt, it sends the request to your Telegram/Discord channel. You approve or deny from your phone. Claude Code resumes automatically. No `--dangerously-skip-permissions` needed.
+
+**Setup:**
+```bash
+claude --channels plugin:telegram@claude-plugins-official
+# Do NOT add --dangerously-skip-permissions — the relay handles approvals
+```
+
+**Trade-off vs `--dangerously-skip-permissions`:**
+
+| | `--dangerously-skip-permissions` | Permission relay |
+|--|--|--|
+| Speed | Fast (no approval wait) | Slower (waits for you) |
+| Safety | Deny-list + command hooks | Full interactive approval |
+| Availability | Fully autonomous | Requires you at your phone |
+
+Use `--dangerously-skip-permissions` for fully autonomous sprints where the deny-list is your safety net. Use permission relay when you want interactive approval from a distance — same as being at the keyboard, but from your phone.
+
 ### Three modes of operation
 
 A solo dev with a project in production has three distinct situations:
@@ -861,13 +892,38 @@ The agents and cycle skills **work out of the box** at startup.
 
 The cycle skills should not be modified during a project. If a skill isn't working well, the problem is usually in CLAUDE.md (insufficient context) or rules (missing conventions). Exception: recurring failure pattern after several sprints → thoughtful adjustment.
 
+### Starting Autonomous Mode
+
+The strategic layer (PM + QA agents) enables autonomous sprint orchestration. Enable it after the manual cycle is solid.
+
+**Prerequisites:**
+1. 3+ successful manual sprints completed — PM agent needs project history in `tasks/lessons.md`
+2. `briefs/direction.md` written — product vision, current milestones, constraints
+3. `briefs/project-state.md` up to date — current technical state
+
+**To start a sparring / planning session with the PM:**
+```bash
+claude --agent=strategic-pm
+```
+The PM reads `briefs/direction.md`, proposes a sprint plan, writes `briefs/sprint-directive.md`. You validate or push back. When ready, the PM can execute the sprint autonomously via `/full-sprint`.
+
+**After each autonomous sprint, run the QA:**
+```bash
+claude --agent=strategic-qa
+```
+The QA reads all sprint output files, challenges PM decisions independently, writes `briefs/qa-review.md`. The PM reads this before planning the next sprint. Neither agent reviews its own work — that's the structural guarantee.
+
+See `.claude/agents/strategic-pm.md` and `.claude/agents/strategic-qa.md` for their full instructions and debate protocol.
+
 ---
 
 ## 10. FAQ
 
-### Why no autonomous orchestrator between phases?
+### Why no autonomous orchestrator by default?
 
 Autonomous orchestrators drift. By sprint 3, the orchestrator starts skipping steps or validating insufficient reviews. The human between each phase costs 30 seconds and saves hours of technical debt.
+
+The **autonomous sprint type** exists for when the manual cycle is well-established (see Sprint Types table). The distinction: autonomous *within* a sprint (the PM chains phases), not *instead* of validation (the human still validates the final output). Prerequisites enforce this: 3+ successful manual sprints, project history in `tasks/lessons.md`, and a QA agent reviewing every sprint before the next starts.
 
 ### Why separate sessions per phase?
 

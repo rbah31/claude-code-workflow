@@ -77,6 +77,23 @@ Look for lessons in:
 - Build blockers (what slowed us down?)
 - Things that went well (what should we keep doing?)
 
+### Lessons hygiene
+
+Check the current size of `tasks/lessons.md`. If it exceeds ~200 entries, or
+every 5th sprint, classify each entry with one of:
+
+- **KEEP** — Still relevant, actively triggered. Leave as-is.
+- **ENCODED** — The lesson is now a hook, rule, or agent instruction. Shorten
+  to a one-liner referencing where it's encoded (e.g., "→ encoded in rules/backend/api.md").
+- **OBSOLETE** — Context no longer applies (feature removed, stack changed). Delete.
+- **STALE** — Hasn't triggered in 10+ sprints. Move to `tasks/lessons-archive.md`
+  (append, don't delete — recoverable if the pattern returns).
+- **PROMOTE** — Lesson is broad enough to belong in `rules/` or an agent prompt.
+  Promote it there, then remove from lessons.md.
+
+This keeps `tasks/lessons.md` actionable. A 500-entry file is not read — a
+100-entry file is.
+
 ## Step 4 — Review workflow configuration
 
 Based on the sprint findings, evaluate whether hooks, rules, or agent
