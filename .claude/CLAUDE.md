@@ -66,3 +66,4 @@ Detailed conventions in `.claude/rules/`, scoped by path:
 - If stuck → notify the human, don't spin in circles
 - If significant correction → update `tasks/lessons.md`
 - Always read `tasks/lessons.md` at the start of each phase (encoded in skills)
+- Pour les tâches complexes (multi-fichiers, debugging, architecture) : utiliser `/effort high`. Le mode par défaut peut être insuffisant et cause un comportement edit-first au lieu de research-first.

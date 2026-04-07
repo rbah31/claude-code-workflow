@@ -250,10 +250,7 @@ Usage in our workflow: **intra-phase** parallelism (3 simultaneous reviewers dur
 - **Sandbox** (`/sandbox`): OS isolation for Bash commands. Used in red team.
 - **Headless Mode** (`claude -p "..."`): non-interactive execution, for CI/CD and scripts.
 - **Plan Mode** (`Shift+Tab` x2): read-only, Claude analyzes without modifying. Sprint planning and complex tasks.
-- **Extended Thinking**: adaptive reasoning at higher token cost. Activate with "think hard" or "ultrathink".
-  - **Use for**: architecture decisions, complex multi-file debugging, security analysis, evaluating major trade-offs
-  - **Skip for**: routine implementation, simple bug fixes, content generation — overhead exceeds gain
-  - **Tip**: "think harder about X" targets the reasoning, not just output length
+- **Extended Thinking / `/effort high`**: use `/effort high` for complex multi-file tasks (architecture, debugging, security analysis). The default medium effort causes the model to edit before researching — leading to lower quality on complex work. Use "think hard" or "ultrathink" in the prompt for one-off deep reasoning. Avoid `/effort high` on simple tasks (single-file edits, quick fixes) — unnecessary cost for no gain.
 - **Useful commands**: `/doctor`, `/context`, `/compact`, `/clear`, `/status`, `/rename`, `/resume`.
 - **Scheduled Tasks — three levels**:
   - **`/schedule` (cloud, recommended)**: recurring jobs on Anthropic infrastructure. Run even with laptop closed. Fresh git checkout of the repo each run, commit/push results. No access to local credentials or private services. Ideal for: dependency audit, backlog hygiene, docs drift, automated tests, dead code detection.
@@ -261,11 +258,7 @@ Usage in our workflow: **intra-phase** parallelism (3 simultaneous reviewers dur
   - **`/loop` (session, ephemeral)**: polling within the current session. Dies when the session closes. Auto-expires after 3 days. Ideal for: monitoring an ongoing deploy, babysitting a PR, one-off checks.
 
   Selection rule: if the job only needs the repo → `/schedule` cloud. If it needs local credentials → Desktop. If it's one-off → `/loop`.
-- **`--bare` flag**: Skips CLAUDE.md, settings, and MCP loading for faster startup.
-  Use with `claude -p` for automated sessions where context is passed explicitly in the prompt.
-  **⚠️ Known issue**: `--bare` can cause authentication failures in some environments.
-  If you get auth errors, remove `--bare` and pass CLAUDE.md + skill file content explicitly
-  in the prompt instead. Slower startup, same result, no auth issues.
+- **`--bare` flag**: Never use `--bare`. It skips CLAUDE.md, hooks, rules, and all project configuration. It is API-only (no interactive login) which causes auth failures on Claude Max. Use `--dangerously-skip-permissions` instead if you need to skip permission prompts.
 - **`--add-dir` flag**: Gives Claude access to additional directories.
   Use when working across multiple repos or referencing external
   projects. Also available as `/add-dir` during a session.
