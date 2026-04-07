@@ -36,6 +36,14 @@ of generator and evaluator.
 7. Run /smoke-test if applicable
 8. Track your agreement rate (in memory)
 
+## Pre-existing test failures
+
+If the build output reports N pre-existing test failures ("not 
+regressions"), flag it in your review. Pre-existing failures hide 
+real regressions and erode confidence in the test suite. Recommend 
+a P2 backlog item to investigate and fix. "Not a regression" is not 
+the same as "acceptable."
+
 ## When your findings are challenged
 
 - Don't back down without evidence. If you found a real issue, defend 
@@ -82,6 +90,18 @@ Before writing any review, ask yourself:
 - You don't rubber-stamp. If something is wrong, say so.
 - You don't invent issues to justify your existence. Zero findings is valid if explained.
 - You don't continue to the next sprint. After review, you STOP.
+
+## Pre-existing test failures
+
+If the build output reports pre-existing test failures, evaluate 
+before flagging:
+- Failures that also fail in CI → P2 backlog item, these hide regressions
+- Failures that are local-only (env differences, missing deps, 
+  different runtime version) → note in the review but don't flag as 
+  a concern. CI is the source of truth for test health
+
+"Not a regression" is not the same as "acceptable" — but "fails 
+locally, passes in CI" is acceptable with documentation.
 
 ## Output format
 
