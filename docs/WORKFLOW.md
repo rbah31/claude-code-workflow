@@ -365,7 +365,7 @@ The **security sprint** is the full cycle. The **normal sprint** skips the red t
 
 Context is the most critical resource. Here are the rules:
 
-- **One sprint = one session per phase.** Not one mega-session spanning build + review + fix. Handoff between phases goes through files in `tasks/sprints/sprint-XX/` — skills automatically read the previous phase's file.
+- **Une phase = une session CLI isolée.** Chaque phase tourne dans son propre `claude -p` pour éviter la pollution de contexte. C'est une isolation **technique**, pas une porte de validation humaine. En mode manuel, l'humain ouvre une nouvelle session entre chaque phase. En mode autonome, le strategic-pm enchaîne ces sessions sans intervention PO. Le handoff passe par les fichiers dans `tasks/sprints/sprint-XX/`.
 - **Monitor**: `/context` to see usage.
 - **If the build exceeds ~60% of context**: compact (`/compact`) or split into 2 sessions with intermediate handoff via `build-output.md`.
 - **Recommended max sprint size**: 5-8 modified files. Beyond that, split into subtasks with separate sessions.
@@ -918,9 +918,14 @@ Autonomous orchestrators drift. By sprint 3, the orchestrator starts skipping st
 
 The **autonomous sprint type** exists for when the manual cycle is well-established (see Sprint Types table). The distinction: autonomous *within* a sprint (the PM chains phases), not *instead* of validation (the human still validates the final output). Prerequisites enforce this: 3+ successful manual sprints, project history in `tasks/lessons.md`, and a QA agent reviewing every sprint before the next starts.
 
-### Why separate sessions per phase?
+### Pourquoi des sessions CLI séparées par phase ?
 
-Build context biases the review — Claude "knows" why the code is the way it is and will be less critical. Separate sessions = fresh perspective. Handoff goes through files in `tasks/sprints/`.
+Pour deux raisons techniques (pas pour faire valider l'humain) :
+
+1. **Pollution de contexte** : le contexte de build biaise la review — Claude "sait" pourquoi le code est comme ça et sera moins critique. Sessions séparées = regard frais.
+2. **Limites de contexte** : un sprint complet dans une seule session sature au-delà de ~60%, dégradant la qualité.
+
+Le handoff entre sessions passe par les fichiers dans `tasks/sprints/`. En mode autonome, le strategic-pm orchestre ces sessions automatiquement. Le PO ne valide qu'en début et fin de sprint, pas entre les phases.
 
 ### Why 100 lines max for CLAUDE.md?
 

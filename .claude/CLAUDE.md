@@ -39,6 +39,13 @@ The sprint cycle is encoded in skills. Invoke and validate, don't micro-manage.
 - Handoff between phases via `tasks/sprints/sprint-XX/`
 - Knowledge capital: `tasks/lessons.md` read at the start of each phase
 
+**Une phase = une session CLI isolée.** Chaque phase tourne dans son propre `claude -p` pour éviter la pollution de contexte. C'est une isolation **technique**, pas une porte de validation humaine.
+
+- Mode manuel : tu invoques `/sprint-plan`, valides le résultat, puis ouvres une nouvelle session pour `/build`.
+- Mode autonome (avec strategic-pm) : le PM enchaîne automatiquement toutes les phases en lançant un `claude -p` distinct pour chacune. Aucune intervention PO entre phases.
+
+Le PO n'intervient qu'en début de sprint (briefing) et en fin de sprint (review PR).
+
 Marketing flow (runs in parallel with dev, not sequentially):
 - Post-sprint: `/marketing-sync` after `/capture-lessons` — marketing adapts to what shipped
 - User feedback: add to `briefs/user-feedback.md` → `/marketing-sync` — PM gets product signal

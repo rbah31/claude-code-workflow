@@ -26,10 +26,15 @@ Read these files in order. If a file doesn't exist, skip it and note its absence
 Look at existing `tasks/sprints/sprint-*` directories. The next sprint is N+1.
 Create the directory: `tasks/sprints/sprint-XX/`
 
-## Step 3 — Switch to plan mode
+## Step 3 — Read-only discipline
 
-Now that the directory exists, activate plan mode (read-only) for the rest of
-the planning phase. Do NOT write code or modify project files during planning.
+During planning, do NOT modify any project files except the plan.md
+itself (which you write at Step 6). Do NOT activate Claude Code's
+plan mode — in non-interactive `claude -p` sessions, plan mode
+terminates via ExitPlanMode awaiting human approval, causing a
+silent exit 0 with no output. Stay in normal mode and self-discipline:
+read everything you need, but only write `tasks/sprints/sprint-XX/plan.md`
+at the end.
 
 ## Step 4 — Produce the plan
 
@@ -82,7 +87,8 @@ Adjust the plan based on your self-challenge.
 
 ## Step 6 — Save and present
 
-Save the plan to `tasks/sprints/sprint-XX/plan.md`.
+Save the plan to `tasks/sprints/sprint-XX/plan.md` using the Write tool (this is a
+non-interactive session — do not present via ExitPlanMode).
 Present it to the human for validation.
 
 ## Channel mode (remote execution)
