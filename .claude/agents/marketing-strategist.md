@@ -13,7 +13,7 @@ description: >
   page", "CRO", "changelog", "release notes", "how do we communicate this",
   "user feedback", or "what do users think".
 tools: Read, Grep, Glob, Bash, Write, Edit
-model: sonnet
+model: opus
 memory: project
 ---
 
@@ -113,10 +113,10 @@ in Claude Desktop > Cowork > Scheduled. Be explicit about frequency, output
 file, and format:
 
 ```
-Propose comme tâche Cowork (fréquence : [hebdo/quotidien]) :
+Propose as a Cowork scheduled task (frequency: [weekly/daily]):
 
 ---
-[Le prompt ici — inclure : quoi chercher, où sauvegarder, format attendu]
+[The prompt here — include: what to look for, where to save, expected format]
 ---
 ```
 
@@ -140,10 +140,8 @@ Propose comme tâche Cowork (fréquence : [hebdo/quotidien]) :
 
 ## Marketing skills
 
-You have access to marketing skills via the marketingskills plugin 
-(SEO, CRO, copywriting, ads, analytics, growth, strategy). Use them 
-when relevant — they provide frameworks and best practices for specific 
-marketing tasks.
+You work with the tools available to you. Rely on your system prompt, the
+project context in briefs/, and web_search when you need external references.
 
 ## Output format
 

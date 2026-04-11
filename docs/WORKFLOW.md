@@ -324,7 +324,7 @@ Invoked after the build and during review. Doesn't just run existing tests — i
 
 ### The `marketing-strategist`
 
-A peer of the PM — not a subordinate. Owns market direction (positioning, messaging, conversion) while the PM owns technical direction. Uses the `marketingskills` community plugin for SEO, CRO, copywriting, and growth frameworks. Communicates with the PM via `briefs/`. See [Section 6](#6-marketing-workflow) for the full marketing workflow.
+A peer of the PM — not a subordinate. Owns market direction (positioning, messaging, conversion) while the PM owns technical direction. Communicates with the PM via `briefs/`. See [Section 6](#6-marketing-workflow) for the full marketing workflow.
 
 ### The 1 Remaining Optional Slot
 
@@ -583,16 +583,6 @@ Set up in Claude Desktop > Cowork > Scheduled. Example prompts:
 
 The human always publishes. Claude produces the content, the human's voice publishes it. No auto-publish.
 
-### Marketing Skills Plugin
-
-SEO, CRO, copywriting, ads, analytics, growth, and strategy frameworks come from the community plugin — not from this template:
-
-```bash
-/plugin install github.com/coreyhaines31/marketingskills
-```
-
-Install once per machine. These skills are **not maintained by this template** — they evolve independently with the plugin. Report issues to the plugin author. The `marketing-strategist` agent uses them automatically when relevant.
-
 ### Content Output Structure
 
 All marketing output lives in `content/` (drafts — human edits tone and publishes):
@@ -849,15 +839,9 @@ template-workflow/
 └── docs/WORKFLOW.md            # This document
 ```
 
-### Marketing Setup (one-time per machine)
+### Marketing Setup (one-time per project)
 
-Install the marketing skills plugin:
-
-```bash
-/plugin install github.com/coreyhaines31/marketingskills
-```
-
-Then run `/marketing-sync` (Mode 4) to generate `briefs/marketing-context.md` from your product vision.
+Run `/marketing-sync` (Mode 4) to generate `briefs/marketing-context.md` from your product vision.
 
 ### Customize at the Start of the Project
 

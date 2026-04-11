@@ -39,12 +39,12 @@ The sprint cycle is encoded in skills. Invoke and validate, don't micro-manage.
 - Handoff between phases via `tasks/sprints/sprint-XX/`
 - Knowledge capital: `tasks/lessons.md` read at the start of each phase
 
-**Une phase = une session CLI isolée.** Chaque phase tourne dans son propre `claude -p` pour éviter la pollution de contexte. C'est une isolation **technique**, pas une porte de validation humaine.
+**One phase = one isolated CLI session.** Each phase runs in its own `claude -p` to avoid context pollution. This is **technical** isolation, not a human approval gate.
 
-- Mode manuel : tu invoques `/sprint-plan`, valides le résultat, puis ouvres une nouvelle session pour `/build`.
-- Mode autonome (avec strategic-pm) : le PM enchaîne automatiquement toutes les phases en lançant un `claude -p` distinct pour chacune. Aucune intervention PO entre phases.
+- Manual mode: you invoke `/sprint-plan`, validate the result, then open a new session for `/build`.
+- Autonomous mode (with strategic-pm): the PM automatically chains all phases by launching a separate `claude -p` for each. No PO intervention between phases.
 
-Le PO n'intervient qu'en début de sprint (briefing) et en fin de sprint (review PR).
+The PO is involved only at sprint start (briefing) and sprint end (PR review).
 
 Marketing flow (runs in parallel with dev, not sequentially):
 - Post-sprint: `/marketing-sync` after `/capture-lessons` — marketing adapts to what shipped
@@ -55,7 +55,7 @@ Marketing flow (runs in parallel with dev, not sequentially):
 ## Available agents
 
 5 universal agents in `.claude/agents/`: architect, code-reviewer, security-auditor, ops-engineer, qa-tester.
-1 marketing agent: `marketing-strategist` — peer of the PM, owns market direction (positioning, copy, SEO, CRO, user feedback). Uses the `marketingskills` community plugin.
+1 marketing agent: `marketing-strategist` — peer of the PM, owns market direction (positioning, copy, SEO, CRO, user feedback).
 1 optional slot for a project-specific agent. Only create when a real need emerges after 2-3 sprints.
 
 ## Rules
@@ -73,4 +73,4 @@ Detailed conventions in `.claude/rules/`, scoped by path:
 - If stuck → notify the human, don't spin in circles
 - If significant correction → update `tasks/lessons.md`
 - Always read `tasks/lessons.md` at the start of each phase (encoded in skills)
-- Pour les tâches complexes (multi-fichiers, debugging, architecture) : utiliser `/effort high`. Le mode par défaut peut être insuffisant et cause un comportement edit-first au lieu de research-first.
+- For complex tasks (multi-file, debugging, architecture): use `/effort high`. Default mode can be insufficient and causes edit-first instead of research-first behavior.

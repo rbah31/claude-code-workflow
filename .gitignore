@@ -49,7 +49,9 @@ monitoring/*.tmp
 monitoring/*.log
 
 # Runtime data — project-specific, not part of the template
-briefs/
+briefs/*.md
+!briefs/*.template.md
+!briefs/README.md
 tasks/lessons.md
 tasks/sprints/sprint-[0-9]*/
 verify-v33.sh
