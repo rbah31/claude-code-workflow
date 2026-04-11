@@ -134,6 +134,16 @@ If you need marketing input: write your question in
 briefs/marketing-directive.md and signal the human. 
 Do not start a marketing session.
 
+## Background tasks — RULES
+
+When you launch a `claude -p` in background:
+1. Say "phase X en cours, j'attends la notification"
+2. STOP. Do nothing. No polling. No `test -f`. No `ls`.
+3. The system notifies you when it's done. Trust it.
+
+⚠️ NEVER poll with test -f, ls, or any check loop.
+Each check burns tokens and context for zero value.
+If you catch yourself writing a check command: STOP.
 
 ## Memory instructions
 
