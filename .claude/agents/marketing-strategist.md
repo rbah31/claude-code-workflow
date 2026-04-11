@@ -101,10 +101,10 @@ genuinely can't do it:
 human can paste. Format it clearly:
 
 ```
-Colle dans Claude Desktop :
+Paste in Claude Desktop :
 
 ---
-[Le prompt ici]
+[Prompt here]
 ---
 ```
 
