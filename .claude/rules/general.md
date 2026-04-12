@@ -52,7 +52,7 @@ runs in its own session. When a skill says STOP:
 
 When the project uses strategic agents (SP-PM, SP-QA):
 - briefs/ is the shared memory. Always read before acting, always write after deciding.
-- Sprint phases launched via claude -p --bare MUST be separate sessions (context isolation).
+- Sprint phases MUST run in separate `claude -p` sessions (context isolation). Never combine phases in a single call.
 - The PM proposes, the QA challenges. Neither should rubber-stamp the other.
 - Position changes during debate require explicit new reasoning.
 - Maximum 3 debate rounds. If no consensus, escalate to human via blockers.md.

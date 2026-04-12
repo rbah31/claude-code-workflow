@@ -1,8 +1,6 @@
 # Claude Code Workflow
 
-> A structured, sprint-based workflow for AI-assisted development with Claude Code. Battle-tested across 53+ sprints in production.
-
-> **April 2026 context.** Anthropic recently shipped Managed Agents, the Advisor tool, Ultraplan, and dynamic scheduled tasks — all pointing toward structured, autonomous, multi-agent workflows. This repository is the artisanal version of that vision: a methodology you can clone today, inspect end-to-end, and adapt to your project. Same direction, different layer of the stack.
+> A nine-agent development team. PM proposes, QA challenges, five technical agents build. You invoke and validate.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Version](https://img.shields.io/badge/version-3.5.1-green.svg)](CHANGELOG.md)
@@ -10,7 +8,15 @@
 
 ---
 
+## April 2026 context
+
+Anthropic shipped a lot this quarter — managed agents, remote operations from your phone, dynamic scheduled tasks for monitoring without leaving your session. This repo assembles those pieces into a working multi-agent development team you can clone today, inspect end-to-end, and adapt to your project.
+
+---
+
 ## Why this exists
+
+**The human only does two things: invoke and validate.** Everything else is encoded in skills.
 
 Without structure, three things happen when you build with Claude Code:
 
@@ -18,30 +24,11 @@ Without structure, three things happen when you build with Claude Code:
 2. **There's no traceability.** Every session is an island. You lose track of what was decided, why, and where you are.
 3. **Quality is not systematic.** The temptation is build → ship without review or tests.
 
-This repository is the answer that emerged from running structured AI-assisted development on a real production project for two months. It's a workflow where **skills encode the process** and **the human only does two things: invoke and validate**.
-
-If you find yourself copy-pasting prompts or manually dictating steps to Claude, that's a workflow bug. It should be in a skill.
-
----
-
-## What this is
-
-A complete project template containing:
-
-- **9 specialized agents** (5 universal + 2 strategic + 1 marketing + 1 ops monitor) with persistent memory
-- **17 skills** covering the full sprint cycle and post-launch operations
-- **5 deterministic hooks** (test gate, secret scanner, deny-list, notifications)
-- **Path-scoped rules** for backend, frontend, infrastructure, and security
-- **Two operating modes**: manual (you invoke each phase) and autonomous (the strategic-pm orchestrates)
-- **A sprint cycle**: `/sprint-plan → /build → /review → /fix → /red-team → /capture-lessons`
-
-Everything is plain markdown and JSON. Nothing to install beyond Claude Code. Inspect, adapt, fork.
+This repository is the answer that emerged from running structured AI-assisted development on a real production project for two months. If you find yourself copy-pasting prompts or manually dictating steps to Claude, that's a workflow bug. It should be in a skill.
 
 ---
 
 ## Proof
-
-This workflow was incubated on a real production SaaS over two months before being extracted into this template:
 
 | Metric | Value |
 |---|---|
@@ -53,19 +40,66 @@ This workflow was incubated on a real production SaaS over two months before bei
 | Autonomous sprint duration | **30–45 minutes** end-to-end |
 | Files modified per sprint | 5–8 (typical) |
 
-The full version history with verifiable commit SHAs is in [CHANGELOG.md](CHANGELOG.md). Every claim above is backed by git history you can audit.
+The full version history with verifiable commit SHAs is in [CHANGELOG.md](CHANGELOG.md). Every claim is backed by git history you can audit.
 
-> **Hotfix v3.5.1 — discovered during the workflow's own usage on 2026-04-11, fixed before public release.** Two bugs surfaced when the strategic-pm agent ran an autonomous sprint: an ambiguous "one phase = one session" semantic, and a silent failure when `/sprint-plan` activated plan mode in non-interactive mode. Both are documented in the changelog. The workflow caught its own bugs in production — that's the whole point.
+> **Hotfix v3.5.1** — two bugs surfaced when the strategic-pm ran an autonomous sprint: an ambiguous session semantic and a silent plan mode failure. Both were discovered during the workflow's own usage on 2026-04-11 and fixed before public release. The workflow caught its own bugs in production. That's the point.
+
+---
+
+## The team
+
+![Global Architecture — The three agents that run your sprints](docs/diagrams/architecture.svg)
+
+Three strategic agents run the cycle. Five technical agents do the building.
+
+**Strategic layer** (activate after 3+ manual sprints):
+
+| Agent | Role | Model |
+|-------|------|-------|
+| `strategic-pm` | Proposes sprint scope, orchestrates all phases autonomously, writes to `briefs/` | Opus |
+| `strategic-qa` | Independently challenges PM decisions, reviews every sprint before the next starts | Opus |
+| `marketing-strategist` | Peer of the PM — owns market direction, copy, user feedback synthesis | Opus |
+
+**The rule:** no agent reviews its own output. PM and QA are in adversarial relationship by design. Three rounds of disagreement, then it escalates to you.
+
+**Technical layer** (available from sprint 1):
+
+| Agent | Domain | Model |
+|-------|--------|-------|
+| `architect` | System design, technical planning | Opus |
+| `code-reviewer` | Quality, conventions, performance, maintainability | Opus |
+| `security-auditor` | Adversarial security audit, red team | Opus |
+| `qa-tester` | Test strategy, edge cases, regression | Sonnet |
+| `ops-engineer` | CI/CD, infra, deployment, cost optimization | Sonnet |
+| `ops-monitor` | First responder, monitoring report triage | Sonnet |
+
+All agents have `memory: project` enabled — they accumulate knowledge about the codebase, past decisions, and recurring patterns across sessions.
+
+---
+
+## How it works
+
+![Sprint Cycle with Artifacts — What each phase produces, what the next phase reads](docs/diagrams/sprint-cycle.svg)
+
+Each phase runs in its own isolated `claude -p` session — not a human approval gate, a technical boundary. Build context biases review; separate sessions give a fresh perspective. A full sprint in one session saturates context past ~60% and degrades quality.
+
+Three sprint types:
+
+- **Hotfix** — `/build → deploy`. Production bug, urgency, fewer than 3 files.
+- **Normal** — `/sprint-plan → /build → /review → /fix → /capture-lessons`.
+- **Security** — Full cycle with `/red-team`. Auth changes, payments, pre-release.
+
+**Manual mode**: you invoke each skill, validate the result, invoke the next.
+
+**Autonomous mode**: `claude --agent=strategic-pm` — the PM chains all phases without your intervention. The QA reviews every sprint independently. You validate the final PR.
 
 ---
 
 ## Quick start
 
-**Prerequisites:** [Claude Code](https://docs.claude.com/en/docs/claude-code) installed and authenticated.
+**Prerequisites:** [Claude Code](https://docs.claude.com) installed and authenticated.
 
 ```bash
-# Use the template (creates a clean repo without this template's git history)
-# Click "Use this template" on GitHub, or:
 git clone https://github.com/rbah31/claude-code-workflow.git my-project
 cd my-project
 rm -rf .git && git init
@@ -75,13 +109,12 @@ rm -rf .git && git init
 # 2. Edit .claude/rules/general.md — your code conventions
 # 3. Add items to tasks/backlog.md
 
-# Verify the setup
 claude
 > /doctor
 > /context
 ```
 
-For your first sprint:
+First sprint:
 
 ```
 > /sprint-plan
@@ -89,7 +122,7 @@ For your first sprint:
 
 Validate the plan, then invoke `/build`, `/review`, `/fix`, and `/capture-lessons` in sequence.
 
-For autonomous orchestration once you have 3+ manual sprints under your belt:
+Autonomous mode (after 3+ manual sprints):
 
 ```bash
 claude --agent=strategic-pm
@@ -99,51 +132,15 @@ The PM reads `briefs/direction.md`, proposes a sprint, and orchestrates the full
 
 ---
 
-## How it works
-
-### The sprint cycle
-
-```
-  /sprint-plan  →  /build  →  /review  →  /fix  →  /red-team  →  /capture-lessons
-       │              │            │           │          │              │
-   Human only       Tests        Fresh        Triaged   Pentester       PR + lessons
-   invokes &      enforced      reviewer     fixes      attacks         + retro
-   validates      by hook       (no build    only       freely         + backlog
-                 (Stop)         context)     marked                     update
-```
-
-Three sprint types adapt the cycle to the work:
-
-- **Hotfix** — `/build → deploy`. Production bug, urgency, < 3 files.
-- **Normal** — `/sprint-plan → /build → /review → /fix → /capture-lessons`. Standard feature sprint.
-- **Security** — Full cycle with `/red-team`. Pre-release, auth changes, payment changes, sensitive data.
-
-### Two operating modes
-
-**Manual mode** — You invoke each skill, validate the result, then invoke the next. Each phase runs in its own `claude -p` session for context isolation. Ideal when you're learning the workflow or working on critical changes.
-
-**Autonomous mode** — The `strategic-pm` agent orchestrates the entire cycle, launching each phase as a separate `claude -p` subprocess. The human only validates the final PR. Enable after 3+ successful manual sprints. The `strategic-qa` agent independently reviews each sprint and challenges PM decisions — neither agent reviews its own work.
-
-### Why sessions are isolated
-
-Each phase runs in its own CLI session for two technical reasons (not for human approval):
-
-1. **Context pollution** — Build context biases review. Claude "knows" why the code is the way it is and becomes less critical. Separate sessions = fresh eyes.
-2. **Context limits** — A full sprint in one session saturates context above ~60%, degrading quality.
-
-This is **technical isolation**, not a human gate. In autonomous mode, the strategic-pm chains these sessions automatically.
-
----
-
 ## What's in the repo
 
 ```
 claude-code-workflow/
 ├── .claude/
 │   ├── CLAUDE.md              # Project source of truth (~100 lines)
-│   ├── settings.json          # Hooks, permissions
-│   ├── agents/                # 9 specialized agents with memory
-│   ├── skills/                # 17 skills (sprint cycle + extensions)
+│   ├── settings.json          # Hooks, permissions, deny-list (31 patterns)
+│   ├── agents/                # 9 specialized agents with persistent memory
+│   ├── skills/                # 18 skills (sprint cycle + extensions)
 │   └── rules/                 # Path-scoped conventions
 ├── briefs/                    # Strategic agent shared memory
 ├── docs/
@@ -159,67 +156,23 @@ claude-code-workflow/
 └── README.md
 ```
 
----
+### The 18 skills
 
-## The 9 agents
+**Sprint cycle:** `sprint-plan`, `build`, `review`, `fix`, `red-team`, `capture-lessons`
 
-| Agent | Role | Model |
-|-------|------|-------|
-| `architect` | System design, technical planning, sprint planning | Opus |
-| `code-reviewer` | Quality, conventions, performance, maintainability | Opus |
-| `security-auditor` | Adversarial security audit, red team | Opus |
-| `qa-tester` | Test strategy, edge cases, regression | Sonnet |
-| `ops-engineer` | CI/CD, infra, deployment, cost optimization | Sonnet |
-| `strategic-pm` | Product Manager — sprint orchestration, decisions | Opus |
-| `strategic-qa` | Independent reviewer challenging PM decisions | Opus |
-| `marketing-strategist` | Positioning, copywriting, user feedback synthesis | Opus |
-| `ops-monitor` | First responder, monitoring report triage | Sonnet |
+**Autonomous orchestration:** `full-sprint`, `update-briefs`
 
-All agents have `memory: project` enabled — they accumulate knowledge across sessions about the codebase, past decisions, and recurring patterns.
+**Operations:** `runbook`, `monitoring-briefing`, `smoke-test`, `product-verification`, `remote-fix`
 
----
+**Marketing & content:** `marketing-sync`, `changelog`, `frontend-slides`
 
-## The 17 skills
-
-**Sprint cycle (6 core skills):**
-`sprint-plan`, `build`, `review`, `fix`, `red-team`, `capture-lessons`
-
-**Autonomous orchestration:**
-`full-sprint`, `update-briefs`
-
-**Operations:**
-`runbook`, `monitoring-briefing`, `smoke-test`, `product-verification`, `remote-fix`
-
-**Marketing & content:**
-`marketing-sync`, `changelog`, `frontend-slides`
-
-**Project setup:**
-`scaffolding`, `data-analysis`
-
----
-
-## Documentation
-
-- [docs/WORKFLOW.md](docs/WORKFLOW.md) — Complete workflow documentation (~960 lines)
-- [docs/SECURITY.md](docs/SECURITY.md) — 6-layer defense architecture
-- [docs/REFERENCES.md](docs/REFERENCES.md) — External resources and inspiration
-- [CHANGELOG.md](CHANGELOG.md) — Version history with verifiable commit SHAs
-- [CONTRIBUTING.md](CONTRIBUTING.md) — How to propose changes
-- [NOTICE](NOTICE) — Attribution and origin
-
----
-
-## Built with this workflow
-
-This workflow has been used to ship 53+ sprints of a multi-tenant SaaS in production. It is currently being open-sourced; case studies and project references will be added as the community grows.
-
-Using this workflow on your project? Open a PR to be listed here.
+**Project setup:** `scaffolding`, `data-analysis`
 
 ---
 
 ## Philosophy
 
-Seven principles that shape every decision in this repo:
+Eight principles that shape every decision in this repo:
 
 1. **Plan first.** Never code without a plan. If it derails, stop and re-plan.
 2. **Subagents for everything specialized.** Isolate concerns, keep the main context clean.
@@ -228,6 +181,18 @@ Seven principles that shape every decision in this repo:
 5. **Balanced elegance.** Neither hack nor over-engineering.
 6. **Claude is autonomous within a phase.** Don't micro-manage. Give scope and context, Claude does the rest.
 7. **Simplicity first.** The simplest change that works. Always.
+8. **Revisit regularly.** Skills and agents must evolve with model capabilities. If the model naturally does what a skill tells it, simplify the skill. Gotchas and business context are more durable than rigid steps.
+
+---
+
+## Documentation
+
+- [docs/WORKFLOW.md](docs/WORKFLOW.md) — Complete workflow documentation
+- [docs/SECURITY.md](docs/SECURITY.md) — 6-layer defense architecture
+- [docs/REFERENCES.md](docs/REFERENCES.md) — External resources and inspiration
+- [CHANGELOG.md](CHANGELOG.md) — Version history with verifiable commit SHAs
+- [CONTRIBUTING.md](CONTRIBUTING.md) — How to propose changes
+- [NOTICE](NOTICE) — Attribution and origin
 
 ---
 
@@ -241,16 +206,16 @@ See [NOTICE](NOTICE) for attribution requirements.
 
 ---
 
-## Acknowledgments
-
-Built on top of [Claude Code](https://docs.claude.com/en/docs/claude-code) by [Anthropic](https://www.anthropic.com). Inspired by the Claude Code community's experimentation with hooks, subagents, and skills throughout 2025–2026.
-
-This workflow is not affiliated with or endorsed by Anthropic.
-
----
-
 ## Author
 
 **Rayan Aly Bah** — DevSecOps engineer who built this workflow to ship a production SaaS without losing his mind to AI-assisted development drift. Connect on [GitHub](https://github.com/rbah31).
 
 Issues, ideas, war stories: [open an issue](https://github.com/rbah31/claude-code-workflow/issues) or start a [discussion](https://github.com/rbah31/claude-code-workflow/discussions).
+
+---
+
+## Acknowledgments
+
+Built on top of [Claude Code](https://docs.claude.com/en/docs/claude-code) by [Anthropic](https://www.anthropic.com). Inspired by the Claude Code community's experimentation with hooks, subagents, and skills throughout 2025–2026.
+
+This workflow is not affiliated with or endorsed by Anthropic.

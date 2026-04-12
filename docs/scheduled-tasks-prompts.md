@@ -1,24 +1,31 @@
 # Scheduled Tasks — Catalog
 
+Scheduled tasks run passively alongside the sprint cycle — they don't replace any
+workflow phase. They monitor, alert, and do housekeeping between sprints.
+For workflow context: see `docs/WORKFLOW.md §8`.
+
 ## Which type to use
 
-| Need | Type | Command |
-|------|------|---------|
-| Runs without laptop, repo access only | Cloud | `/schedule` in Claude Code |
-| Needs local credentials (AWS, GCP) | Desktop | Schedule tab in Claude Desktop |
-| Needs external connectors (Slack, Gmail, Calendar) | Cowork | /schedule in Cowork |
+| Need | Type | How |
+|------|------|-----|
+| Runs without laptop, repo access only | Cloud | `/schedule` in CLI or [claude.ai/code/scheduled](https://claude.ai/code/scheduled) |
+| Needs local credentials (AWS, GCP) or MCP connectors (Slack, Gmail, Calendar) | Desktop | Schedule tab in Claude Desktop |
 | Watch something for the next hour | Session | `/loop` in Claude Code CLI |
 
 Cloud jobs commit results to `monitoring/`. Desktop jobs write locally
-and push. Both converge in the repo via git. Cowork tasks produce
-results in the Cowork UI (not in the repo).
+and push. Both converge in the repo via git.
 
 ---
 
-### Slot strategy (Max plan: 3 cloud agents)
+> **Minimum intervals:** Cloud = 1 hour. Desktop = 1 minute. `/loop` = 1 minute. Cron expressions firing more frequently than the minimum are rejected.
 
-The Max plan allows 3 concurrent cloud scheduled agents. Prioritize
-cloud slots for the most critical repo-only tasks:
+### Slot strategy
+
+> Cloud agent slot limits vary by plan and may change. Verify your current
+> quota at [claude.ai/settings](https://claude.ai/settings) or in the
+> Claude Code scheduled tasks UI. The example below assumes 3 slots.
+
+Prioritize cloud slots for the most critical repo-only tasks:
 
 | Priority | Slot | Recommended task |
 |----------|------|-----------------|
@@ -26,9 +33,8 @@ cloud slots for the most critical repo-only tasks:
 | 2 | Cloud | Daily brief (aggregates all monitoring) — daily |
 | 3 | Cloud | Weekly project health (backlog + docs + retro) — weekly |
 
-Tasks needing local credentials (AWS, GCP, Stripe CLI) go to Desktop
-scheduled tasks. Tasks needing external connectors (Slack, Gmail) go
-to Cowork.
+Tasks needing local credentials (AWS, GCP, Stripe CLI) or MCP connectors
+(Slack, Gmail) go to Desktop scheduled tasks.
 
 If you have fewer than 3 critical repo-only tasks, use remaining cloud
 slots for test-health or any other repo-only automation.
@@ -39,10 +45,24 @@ Use this pattern when slot-constrained.
 
 ---
 
-## Cloud agents (`/schedule`) — repo access only
+## What NOT to schedule
+
+- Sprint phases (/build, /review, /fix) — these need human validation
+- Red team audits — these need human judgment on scope
+- Anything involving payments, refunds, or user data mutations
+- Content publishing or social media posting
+- Decisions that affect product direction
+
+---
+
+## Cloud agents — repo access only
+
+> Cloud scheduled tasks are created via `/schedule` in the CLI (also `/schedule list`, `/schedule update`, `/schedule run`) or at [claude.ai/code/scheduled](https://claude.ai/code/scheduled). See the [official docs](https://code.claude.com/docs/en/web-scheduled-tasks).
 
 These run on Anthropic's infrastructure. Fresh git checkout each run.
 No local credentials, no local services. Can commit and push.
+
+> **Branch safety:** By default, cloud tasks can only push to `claude/`-prefixed branches. Enable "Allow unrestricted branch pushes" per-repository in the scheduled tasks settings if a task needs to push elsewhere.
 
 ### dependency-watch
 
@@ -201,11 +221,11 @@ and services. Only run when Mac is awake and Desktop is open.
 **What it does:** Checks cloud infrastructure health via local CLI.
 **Output:** `monitoring/health-check-latest.md`
 
-Note: This task needs local credentials (AWS CLI, GCP CLI, etc.)
-that are not available in cloud agents. Adapt the prompt to your
-cloud provider.
+Note: This task needs local credentials that are not available in cloud
+agents. Two provider variants below — use the one matching your stack,
+or combine both if multi-cloud.
 
-Prompt (AWS example):
+Prompt (AWS variant):
 
 > You are an infrastructure health monitor.
 >
@@ -223,23 +243,42 @@ Prompt (AWS example):
 > 3. If any service is critical, save to monitoring/alerts/infra-[date].md
 > 4. Commit if changed: chore(monitoring): update health check report
 
+Prompt (GCP variant):
+
+> You are an infrastructure health monitor.
+>
+> 1. Use gcloud CLI to check:
+>    - Cloud Run service status and recent error logs
+>    - Cloud SQL instance health and connection count
+>    - Load balancer 5xx error rate (via gcloud logging)
+>    - Active Cloud Monitoring alerts
+>    - Recent deploy events (Cloud Deploy / Cloud Build)
+> 2. Write report to monitoring/health-check-latest.md:
+>    - Status per service: healthy / degraded / critical
+>    - Error rates and trends
+>    - Active alerts
+>    - Scan timestamp
+> 3. If any service is critical, save to monitoring/alerts/infra-[date].md
+> 4. Commit if changed: chore(monitoring): update health check report
+
 ---
 
-## Cowork agents — needs connectors
+## Desktop agents with external connectors
 
-These run in Cowork with access to MCP connectors (Slack, Gmail,
-Google Calendar, Drive, etc.). Only run when Mac is awake.
+These run as Desktop scheduled tasks with MCP connectors (Slack, Gmail,
+Google Calendar, Drive, etc.) configured in Claude Desktop. Only run
+when Mac is awake.
 
 ### daily-brief
 
 **Frequency:** Daily (morning)
 **Model:** Sonnet
 **What it does:** Pulls from connected tools to produce a morning briefing.
-**Output:** Cowork UI (not committed to repo)
+**Output:** Claude Code session (not committed to repo)
 
 Note: This task needs Slack, email, and/or calendar connectors that
-are configured in Cowork. It does NOT write to the repo — the
-briefing is consumed in the Cowork UI or via Dispatch on phone.
+are configured in Claude Desktop. It does NOT write to the repo — the
+briefing is consumed directly in Claude Code or via Dispatch on phone.
 
 Prompt:
 
@@ -285,12 +324,12 @@ If there are new review comments, summarize them. If CI failed,
 show the error.
 ```
 
----
+### log-watch
 
-## What NOT to schedule
+**Frequency:** Every 2 minutes (during active debugging)
 
-- Sprint phases (/build, /review, /fix) — these need human validation
-- Red team audits — these need human judgment on scope
-- Anything involving payments, refunds, or user data mutations
-- Content publishing or social media posting
-- Decisions that affect product direction
+```
+/loop 2m tail the last 50 lines of [log file or service logs].
+If you see new errors or exceptions, summarize them with the
+timestamp and surrounding context. Stop reporting if it's quiet.
+```

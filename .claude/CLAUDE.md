@@ -21,7 +21,7 @@
 - Main branch: `main`
 - Branch pattern: `feature/xxx`, `fix/xxx`, `hotfix/xxx`
 - Before declaring "done": tests MUST pass (enforced by Stop hook)
-- Cross-review mandatory: A never reviews their own code
+- Reviewer ≠ author: in team settings, code is reviewed by someone else. In solo settings, use a fresh session or the `strategic-qa` agent for an independent review.
 
 ## Architecture
 
@@ -35,28 +35,27 @@
 The sprint cycle is encoded in skills. Invoke and validate, don't micro-manage.
 
 - `/sprint-plan` → `/build` → `/review` → `/fix` → `/red-team` → `/capture-lessons`
-- Sprint types: hotfix (build → manual deploy or CI), normal (no red-team), security (full cycle)
-- Handoff between phases via `tasks/sprints/sprint-XX/`
+- Sprint types: hotfix (build → deploy), normal (no red-team), security (full cycle)
+- **One phase = one isolated `claude -p` session.** Technical isolation, not a human approval gate.
+- In autonomous mode (`strategic-pm`), the PM chains all phases without PO intervention.
+- Handoff between phases: `tasks/sprints/sprint-XX/` files
 - Knowledge capital: `tasks/lessons.md` read at the start of each phase
 
-**One phase = one isolated CLI session.** Each phase runs in its own `claude -p` to avoid context pollution. This is **technical** isolation, not a human approval gate.
-
-- Manual mode: you invoke `/sprint-plan`, validate the result, then open a new session for `/build`.
-- Autonomous mode (with strategic-pm): the PM automatically chains all phases by launching a separate `claude -p` for each. No PO intervention between phases.
-
-The PO is involved only at sprint start (briefing) and sprint end (PR review).
-
-Marketing flow (runs in parallel with dev, not sequentially):
-- Post-sprint: `/marketing-sync` after `/capture-lessons` — marketing adapts to what shipped
-- User feedback: add to `briefs/user-feedback.md` → `/marketing-sync` — PM gets product signal
-- Pre-sprint: `/marketing-sync` (Mode 3) — marketing flags which backlog items have highest user demand
-- PM ↔ marketing communicate via `briefs/` (marketing-context, marketing-directive, user-feedback)
+Marketing runs in parallel (not sequential). PM ↔ marketing communicate via `briefs/`.
+Full details: `docs/WORKFLOW.md`.
 
 ## Available agents
 
-5 universal agents in `.claude/agents/`: architect, code-reviewer, security-auditor, ops-engineer, qa-tester.
-1 marketing agent: `marketing-strategist` — peer of the PM, owns market direction (positioning, copy, SEO, CRO, user feedback).
-1 optional slot for a project-specific agent. Only create when a real need emerges after 2-3 sprints.
+**5 universal** (use from sprint 1): `architect`, `code-reviewer`, `security-auditor`, `ops-engineer`, `qa-tester`
+
+**3 strategic/ops** (activate after 3+ successful manual sprints):
+- `strategic-pm` — orchestrates sprint phases autonomously via `claude -p`
+- `strategic-qa` — independently challenges PM decisions, writes `briefs/qa-review.md`
+- `ops-monitor` — first responder for monitoring triage
+
+**1 marketing**: `marketing-strategist` — peer of the PM, owns market direction
+
+**1 optional slot**: project-specific agent. Only when a real need emerges after 2-3 sprints.
 
 ## Rules
 
@@ -65,6 +64,17 @@ Detailed conventions in `.claude/rules/`, scoped by path:
 - `rules/backend/` — backend conventions
 - `rules/frontend/` — frontend conventions
 - `rules/security/` — security conventions
+
+## Remote operations (optional)
+
+Sessions can be operated from your phone via the Channels plugin (Telegram/Discord).
+Requires the Mac to stay awake — see `docs/mac-persistent-setup.md`.
+
+## Stance on tooling
+
+This workflow evolves with Claude Code's capabilities. When a new Anthropic feature
+arrives, evaluate if it simplifies what we've built manually. If yes, migrate. If no,
+document why in `docs/REFERENCES.md`. See `docs/WORKFLOW.md §6` for current mechanism decisions.
 
 ## Reflexes
 

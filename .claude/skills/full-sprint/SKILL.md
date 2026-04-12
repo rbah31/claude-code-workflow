@@ -11,8 +11,13 @@ description: >
 # Full Sprint Execution
 
 You are orchestrating a complete sprint cycle. Each phase runs in an
-isolated `claude -p --bare` session for context isolation — the review
+isolated `claude -p` session for context isolation — the review
 MUST NOT have the build context (it biases the review).
+
+> ⚠️ **`--bare` exception**: This skill uses `--bare` for SDK startup
+> performance (~10x faster). Trade-offs: hooks skipped, API-only auth
+> (no Max OAuth). This is a documented exception — see `docs/WORKFLOW.md §3`
+> and `docs/REFERENCES.md`. Do NOT reproduce this pattern in interactive sessions.
 
 **IMPORTANT**: This skill automates the same phase-by-phase workflow as
 the manual sprint cycle. Quality comes from context isolation, not from
@@ -33,6 +38,10 @@ Create the directory: `tasks/sprints/sprint-XX/`
 For each phase, run a separate `claude -p` session via Bash:
 
 ```bash
+# ⚠️  --bare used intentionally here for SDK startup performance (~10x faster).
+# Trade-offs: hooks skipped, API-only auth (no Max OAuth). This is an
+# exception documented in docs/WORKFLOW.md §3 and docs/REFERENCES.md.
+# Do NOT reproduce this pattern in interactive sessions.
 claude -p --bare --dangerously-skip-permissions \
   "You are working on [project name]. \
    Read .claude/CLAUDE.md for project conventions. \
