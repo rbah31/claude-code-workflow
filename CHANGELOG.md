@@ -68,14 +68,14 @@ the value of dogfooding before public release.
 
 - **`/effort high` enabled by default.** Higher reasoning effort for all
   strategic agents. Removed misleading `--bare` flag warnings.
-  Commits: `d67c449` — *docs: add /effort high guidance + reinforce --bare warning*
-  and `cc2b0ab` — *fix(workflow): add effort high by default and remove bare flag*
+  Commits: `f59991f` — *docs: add /effort high guidance + reinforce --bare warning*
+  and `c6f769b` — *fix(workflow): add effort high by default and remove bare flag*
 
 ### Pre-release cleanup
 
 - Pre-publication cleanup: removed all client-specific references, unified
   author attribution, gitignored runtime artifacts.
-  Commit: `b337cdd` — *chore: pre-publication cleanup for public GitHub release*
+  Commit: `18b53a5` — *chore: pre-publication cleanup for public GitHub release*
 
 ---
 
