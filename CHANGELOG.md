@@ -53,29 +53,29 @@ the value of dogfooding before public release.
   as a peer to the strategic-pm, not a subordinate. Communication via
   `briefs/marketing-directive.md` files, never response files. Anti-sycophancy
   triangle PM ↔ QA ↔ Marketing — each agent challenges the others.
-  Commit: `54a88d9` — *feat: upgrade workflow to v3.5 — marketing layer as PM peer*
+  Commit: `2a9b1f2` — *feat: upgrade workflow to v3.5 — marketing layer as PM peer*
 
 - **Anti-sycophancy wiring.** Each strategic agent has explicit "PROPOSER /
   CHALLENGER" personas with rules like "I agree without explanation is
   forbidden". Forces evidence-based debate.
-  Commit: `0bb1be8` — *feat(agents): wire PM ↔ QA ↔ Marketing anti-sycophancy triangle*
+  Commit: `5ddc045` — *feat(agents): wire PM ↔ QA ↔ Marketing anti-sycophancy triangle*
 
 - **Audit + 8 missing items documented.** Comprehensive workflow audit covering
   agent invocation patterns, session discipline, and undocumented behaviors.
-  Commit: `5617f29` — *docs: complete v3.5 audit — 8 missing items documented*
+  Commit: `638ddfb` — *docs: complete v3.5 audit — 8 missing items documented*
 
 ### Changed
 
 - **`/effort high` enabled by default.** Higher reasoning effort for all
   strategic agents. Removed misleading `--bare` flag warnings.
-  Commits: `f59991f` — *docs: add /effort high guidance + reinforce --bare warning*
-  and `c6f769b` — *fix(workflow): add effort high by default and remove bare flag*
+  Commits: `d6e0899` — *docs: add /effort high guidance + reinforce --bare warning*
+  and `4a99a26` — *fix(workflow): add effort high by default and remove bare flag*
 
 ### Pre-release cleanup
 
 - Pre-publication cleanup: removed all client-specific references, unified
   author attribution, gitignored runtime artifacts.
-  Commit: `18b53a5` — *chore: pre-publication cleanup for public GitHub release*
+  Commit: `8f106ac` — *chore: pre-publication cleanup for public GitHub release*
 
 ---
 
@@ -87,12 +87,12 @@ the value of dogfooding before public release.
   for `PreToolUse(Bash)` blocking destructive commands. Secret scanner hooks
   on `PostToolUse(Write|Edit)` detecting AWS keys, Stripe keys, GitHub tokens,
   PEM blocks. Pre-write block on files containing existing secrets.
-  Commit: `213dc0e` — *feat: upgrade workflow to v3.4 — headless mode security hardening*
+  Commit: `111d298` — *feat: upgrade workflow to v3.4 — headless mode security hardening*
 
 - **Reinforced PreToolUse hook.** Additional hardening on the deny-list and
   Bash command interception for autonomous (`--dangerously-skip-permissions`)
   workflows.
-  Commit: `dd5a3a1` — *chore(security): harden deny-list and PreToolUse hook for headless mode*
+  Commit: `135c8a9` — *chore(security): harden deny-list and PreToolUse hook for headless mode*
 
 ---
 
@@ -110,7 +110,7 @@ the value of dogfooding before public release.
 - The strategic layer enables end-to-end autonomous sprint cycles while
   preserving human gates at sprint boundaries.
 
-  Commit: `3fa4bc7` — *feat: add v3.3 strategic layer — autonomous sprint orchestration*
+  Commit: `b12d004` — *feat: add v3.3 strategic layer — autonomous sprint orchestration*
 
 ---
 
