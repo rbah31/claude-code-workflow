@@ -83,8 +83,8 @@ Source: Anthropic documentation
 
 ### 2026-04 (ongoing) — ✅ Prompt caching on all long-running sessions
 
-Not a new feature, but worth calling out: our sprints show a **95% cache
-read ratio** across 1.98B total tokens. The cache layout matters — stable
+Not a new feature, but worth calling out: our sprints show a **95.5% cache
+read ratio** across 2.18B total tokens. The cache layout matters — stable
 CLAUDE.md + deferred-loading skills is what makes this work. The reason
 per-sprint cost stays predictable.
 

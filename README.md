@@ -32,11 +32,11 @@ This repository is the answer that emerged from running structured AI-assisted d
 
 | Metric | Value |
 |---|---|
-| Sprints shipped | **53+** |
+| Sprints shipped | **55+** |
 | Incubation period | **~2 months** (February–April 2026) |
-| Total Claude API cost | **$1,271.92** (verified via [ccusage](https://github.com/ryoppippi/ccusage)) |
-| Without prompt caching | ~$12,000 |
-| Cache hit rate | **95%** |
+| Total Claude API cost | **$1,394.38** (verified via [ccusage](https://github.com/ryoppippi/ccusage)) |
+| Without prompt caching | ~$13,000 |
+| Cache hit rate | **95.5%** |
 | Autonomous sprint duration | **30–45 minutes** end-to-end |
 | Files modified per sprint | 5–8 (typical) |
 

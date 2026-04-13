@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Background
 
-This workflow was incubated for two months on a real production project (53+
+This workflow was incubated for two months on a real production project (55+
 sprints) before being extracted into this public template on 2026-03-29. The
 pre-extraction history (v0 → v3.1) lives in the original private project; the
 public history starts at v3.2 with commit `b48149d`.
