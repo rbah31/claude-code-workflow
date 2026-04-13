@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Version](https://img.shields.io/badge/version-3.5.1-green.svg)](CHANGELOG.md)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-orange)](https://docs.claude.com)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-orange)](https://code.claude.com/docs/en/overview)
 
 ---
 
@@ -97,7 +97,7 @@ Three sprint types:
 
 ## Quick start
 
-**Prerequisites:** [Claude Code](https://docs.claude.com) installed and authenticated.
+**Prerequisites:** [Claude Code](https://code.claude.com/docs/en/overview) installed and authenticated.
 
 ```bash
 git clone https://github.com/rbah31/claude-code-workflow.git my-project
@@ -216,6 +216,6 @@ Issues, ideas, war stories: [open an issue](https://github.com/rbah31/claude-cod
 
 ## Acknowledgments
 
-Built on top of [Claude Code](https://docs.claude.com/en/docs/claude-code) by [Anthropic](https://www.anthropic.com). Inspired by the Claude Code community's experimentation with hooks, subagents, and skills throughout 2025–2026.
+Built on top of [Claude Code](https://code.claude.com/docs/en/overview) by [Anthropic](https://www.anthropic.com). Inspired by the Claude Code community's experimentation with hooks, subagents, and skills throughout 2025–2026.
 
 This workflow is not affiliated with or endorsed by Anthropic.

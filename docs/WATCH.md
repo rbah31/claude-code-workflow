@@ -229,7 +229,7 @@ The canonical Anthropic PDF on skill design: YAML frontmatter, progressive
 disclosure, triggering tests, MCP integration patterns, distribution.
 Read in full before designing our 18 skills.
 
-Source: [docs.claude.com](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview)
+Source: [https://code.claude.com/docs/en/overview](https://code.claude.com/docs/en/docs/agents-and-tools/agent-skills/overview)
 
 ---
 
