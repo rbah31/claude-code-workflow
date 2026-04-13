@@ -203,7 +203,7 @@ are preserved in `tasks/sprints/sprint-XX/`. This means:
 
 ## Comparison: Claude workflow vs alternatives
 
-| Guard | Open terminal | CI/CD pipeline | Claude workflow (v3.5.1) |
+| Guard | Open terminal | CI/CD pipeline | Claude workflow (v3.5.2) |
 |-------|--------------|----------------|--------------------------|
 | Deny-list (destructive cmds) | ❌ | Partial | ✅ 31 patterns |
 | Deterministic PreToolUse hooks | ❌ | ❌ | ✅ no hangs |

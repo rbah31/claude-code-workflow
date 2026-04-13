@@ -3,7 +3,7 @@
 > A nine-agent development team. PM proposes, QA challenges, five technical agents build. You invoke and validate.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Version](https://img.shields.io/badge/version-3.5.1-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.5.2-green.svg)](CHANGELOG.md)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-orange)](https://code.claude.com/docs/en/overview)
 
 ---
