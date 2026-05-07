@@ -131,14 +131,31 @@ on our radar:
   skill that drafts a new MEMORY.md for arbitration.
   Reference: <https://platform.claude.com/docs/en/managed-agents/dreams>
 
-### Rolling propagation (v4.0.x)
+### Q14 prompt refactor — positive examples
 
-The proving-ground project also incubated **Q14 phase 3 — positive examples
-on agents and skills** (commit `31a2dd6` upstream). This is a refactor of
-form (replace negative "don't do X" examples with positive "do Y" examples)
-across 10+ agents and 5+ skills. It's not bundled in v4.0.0 because it's
-form-only; it will roll out in v4.0.x point releases as we validate each
-agent reformulation against the live behavior.
+All public agents and the build/fix/full-sprint skills get a positive-form
+reformulation of their "What you don't do" sections. The prompt-engineering
+rationale: positive instructions ("do X") generalize better than negations
+("don't do Y") and reduce ambiguity at the edges where the model has to
+decide what falls under "X is forbidden". Each agent now opens its
+behavioral section with its role explicitly named (e.g., "Your role —
+reviewer, not fixer", "Your auditing posture — pentester, not
+box-checker"), then states what to do in active voice.
+
+Files reformulated: `architect`, `code-reviewer`, `qa-tester`,
+`security-auditor`, `ops-engineer`, `ops-monitor`, `strategic-qa`,
+`build`, `fix`, `full-sprint`. The `strategic-pm` agent received its
+equivalent reformulation as part of the V2 refactor (above).
+
+### `--bare` removed from `full-sprint` skill
+
+The `full-sprint` skill previously recommended `claude -p --bare
+--dangerously-skip-permissions` for ~10x SDK startup performance. The
+flag has been removed because the trade-offs (hooks skipped, API-only
+auth that breaks Claude Max OAuth, missing CLAUDE.md/rules auto-load)
+outweigh the startup gain — particularly now that v4.0 introduces hooks
+that you actively want to fire (`block_wiki_write`, `protect-uncommitted`,
+PostToolUse secrets scan).
 
 ### Migration
 
