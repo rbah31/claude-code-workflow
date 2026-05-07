@@ -3,7 +3,7 @@
 > A nine-agent development team. PM proposes, QA challenges, five technical agents build. You invoke and validate.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Version](https://img.shields.io/badge/version-3.5.2-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-4.0.0-green.svg)](CHANGELOG.md)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-orange)](https://code.claude.com/docs/en/overview)
 
 ---
@@ -43,6 +43,8 @@ This repository is the answer that emerged from running structured AI-assisted d
 The full version history with verifiable commit SHAs is in [CHANGELOG.md](CHANGELOG.md). Every claim is backed by git history you can audit.
 
 > **Hotfix v3.5.1** — two bugs surfaced when the strategic-pm ran an autonomous sprint: an ambiguous session semantic and a silent plan mode failure. Both were discovered during the workflow's own usage on 2026-04-11 and fixed before public release. The workflow caught its own bugs in production. That's the point.
+
+> **v4.0.0 — May 2026** — five months of dogfooding surfaced four incident patterns that v3.x didn't prevent: agents overwriting uncommitted work, PMs auto-merging without manual smoke checks, sparse wrap-ups hiding blockers, auto-routing CI failures over pre-existing debt. v4.0 closes these gaps with two new PreToolUse hooks (`block_wiki_write.py`, `protect-uncommitted-hook.py`), a strategic-pm V2 that stops at the merge gate and persists state across sessions, and an archive convention for sprints/backlog. See [CHANGELOG.md](CHANGELOG.md) and [docs/MIGRATION-v4.md](docs/MIGRATION-v4.md).
 
 ---
 
