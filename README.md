@@ -142,7 +142,7 @@ claude-code-workflow/
 │   ├── CLAUDE.md              # Project source of truth (~100 lines)
 │   ├── settings.json          # Hooks, permissions, deny-list (31 patterns)
 │   ├── agents/                # 9 specialized agents with persistent memory
-│   ├── skills/                # 18 skills (sprint cycle + extensions)
+│   ├── skills/                # 19 skills (sprint cycle + extensions)
 │   └── rules/                 # Path-scoped conventions
 ├── briefs/                    # Strategic agent shared memory
 ├── docs/
@@ -158,11 +158,13 @@ claude-code-workflow/
 └── README.md
 ```
 
-### The 18 skills
+### The 19 skills
 
 **Sprint cycle:** `sprint-plan`, `build`, `review`, `fix`, `red-team`, `capture-lessons`
 
 **Autonomous orchestration:** `full-sprint`, `update-briefs`
+
+**Wiki curation:** `wiki-review`
 
 **Operations:** `runbook`, `monitoring-briefing`, `smoke-test`, `product-verification`, `remote-fix`
 
