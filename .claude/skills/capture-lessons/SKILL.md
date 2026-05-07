@@ -190,15 +190,37 @@ Save to `tasks/sprints/sprint-XX/retrospective.md`:
 ## Step 7 — Update the backlog
 
 Update `tasks/backlog.md`:
-- Remove completed items
+- **Move completed items** to `tasks/backlog-archive.md` (append at the end with the sprint number and date — preserves searchability without polluting the active file)
 - Add deferred items from review and red team
 - Add any new items discovered during the sprint
 
-## Step 8 — Notify and stop
+Format for archived item (appended to `tasks/backlog-archive.md`):
+```markdown
+## [Sprint XX — YYYY-MM-DD] Item title
+
+[Original item body]
+```
+
+## Step 8 — Archive old sprint folders
+
+Keep the **5 most recent sprint folders** active in `tasks/sprints/`. Move
+older ones to `tasks/sprints/archive/`.
+
+Procedure:
+1. List `tasks/sprints/sprint-*` directories (excluding `archive/`)
+2. Sort by sprint number, identify the oldest beyond the 5 most recent
+3. For each sprint to archive: `mv tasks/sprints/sprint-NN tasks/sprints/archive/sprint-NN`
+4. Note in the retrospective: "Archived sprint-NN to tasks/sprints/archive/"
+
+`tasks/sprints/archive/` is preserved for historical reference but **not loaded by default** in any session — agents and skills read only the active `tasks/sprints/sprint-NN/` directories.
+
+If sprint count is at or below 5, skip this step.
+
+## Step 9 — Notify and stop
 
 Signal to the human:
 "Sprint XX complete. PR ready, lessons captured, docs updated, retro generated,
-backlog updated. Ready to merge and start the next sprint with `/sprint-plan`."
+backlog updated, [archived sprint-NN if applicable]. Ready to merge and start the next sprint with `/sprint-plan`."
 
 ## Channel mode (remote execution)
 
@@ -224,6 +246,7 @@ This log gives a quick overview of project velocity across sprints.
 
 **STOP. Your deliverables are: PR description, updated lessons.md, updated docs,
 workflow configuration changes (hooks/rules/agents/skills), retrospective.md,
-and updated backlog.md.**
+updated backlog.md (with completed items moved to backlog-archive.md), and
+any old sprint folders moved to tasks/sprints/archive/.**
 Do NOT start the next sprint. The human will open a new session and invoke
 `/sprint-plan` separately.
