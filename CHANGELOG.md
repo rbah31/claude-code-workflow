@@ -19,6 +19,142 @@ All commit SHAs below are verifiable in this repository's git history via
 
 ---
 
+## [4.0.0] — 2026-05-07
+
+Major release. Five months of dogfooding on the proving-ground project surfaced
+a recurring class of incidents that the v3.x scaffold did not prevent: agents
+overwriting uncommitted work, PMs auto-merging PRs without manual smoke checks,
+sparse wrap-ups that hid blockers, auto-route on CI failure paving over
+pre-existing debt. v4.0 closes these gaps with deterministic enforcement
+(hooks) and explicit boundaries (PM merge ownership, archive convention).
+
+### Added
+
+- **Two new PreToolUse hooks** (`.claude/hooks/`):
+  - **`block_wiki_write.py`** — blocks direct agent writes under `wiki/**`
+    unless the bypass sentinel `.claude/.wiki-review-active` is present. The
+    `/wiki-review` skill is the single legitimate path through the gate.
+    The wiki stays human-curated; agents propose via
+    `briefs/wiki-proposals/<date>-<slug>.md`.
+  - **`protect-uncommitted-hook.py`** — blocks destructive git commands
+    (`git checkout -- <path>`, `git restore <path>`, `git reset --hard`,
+    `git stash drop|clear`, `git clean -f`, `git rm -f`) when the worktree
+    is dirty. Closes the silent-overwrite incident pattern observed in
+    auto-mode sessions. Allows safe variants (`git restore --staged`,
+    `git stash push|pop`, `git reset --soft|--mixed`) and fail-opens on
+    internal errors.
+
+- **`strategic-pm` V2 — merge ownership boundary** (`.claude/agents/strategic-pm.md`):
+  - PM stops at `gh pr checks --watch` after a QA verdict approves. The PO
+    clicks `gh pr merge`. The PM never executes the merge button.
+  - Wrap-up template enriched from sparse to 5 explicit sections, including
+    **Pre-S<NEXT> requisites extracted item-by-item** from `qa-review.md` —
+    pointer alone is no longer sufficient.
+  - CI failure routing distinguishes sprint-introduced regressions
+    (auto-route to `/fix`) from pre-existing debt surfaced by CI (propose
+    2-3 options to the PO and wait for decision).
+  - Persistence rule: PM updates `briefs/project-state.md` after each
+    sprint with sprint status, post-merge action checklist, and next-sprint
+    readiness (`actionable | blocked-by: [list]`). Next session reads it
+    first.
+  - New step in "How you work": read `briefs/deployment-topology.md` at
+    session start to filter pipeline-covered actions out of the manual
+    checklist sent to the PO.
+
+- **`briefs/deployment-topology.template.md` (NEW)** — describes what the
+  CI/CD pipeline covers automatically vs what stays manual. Read by the PM
+  to build the wrap-up. Each project copies and fills with their actual
+  pipeline.
+
+- **Archive convention for sprints and backlog**:
+  - **`tasks/backlog-archive.md` (NEW)** — append-only archive for completed
+    backlog items. Replaces "delete on completion" with searchable
+    archival.
+  - **`tasks/sprints/archive/` (NEW)** — folder for sprint folders older
+    than the 5 most recent. Not loaded by default in any session.
+  - **`/capture-lessons` Step 7** reformulated: "move completed items to
+    backlog-archive.md" instead of "remove completed items".
+  - **`/capture-lessons` Step 8 (NEW)** — "Archive old sprint folders".
+    Procedure: keep 5 most recent active in `tasks/sprints/`, move older
+    to `tasks/sprints/archive/`.
+
+- **Cache hygiene + tooling preferences + post-sprint boundary** in
+  `.claude/CLAUDE.md`:
+  - **Cache hygiene** — stable prefix discipline; auto-compact override
+    to 80% (paired with new env var) to avoid silent context-rot past 80%.
+  - **Task delegation** — when to use sub-agents (Explore for parallel
+    scan, isolation for scoped tasks) vs handle in-line. Self-contained
+    briefing rule: objective + expected format + max length.
+  - **Preferred tools** — dedicated tools beat the shell (Read > cat,
+    Edit > sed, Write > echo). Bash for git/pytest/npm/deployment only.
+  - **Post-sprint boundary** — fresh session for the next sprint after
+    `/capture-lessons`. Long-lived context lives in `briefs/project-state.md`
+    and `tasks/lessons.md`, not in conversation history.
+
+- **Two new env vars** in `.claude/settings.json`:
+  - `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=80` — auto-compact at 80% instead of
+    the 95% default.
+  - `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` — 1M context window disabled,
+    paired with the 80% cap to keep fresh sessions cheap and predictable.
+
+- **`docs/MIGRATION-v4.md` (NEW)** — step-by-step upgrade guide for v3.5.x
+  users covering pull + conflict resolution, behavioral change explanations
+  (PM merge gate, project-state bridge, CI failure routing), hook
+  verification commands, and rollback procedure.
+
+### Changed
+
+- **`/capture-lessons` final STOP message** updated to mention the new
+  archive moves (backlog-archive.md and tasks/sprints/archive/).
+- **`strategic-pm` "How you work"** step list grows from 9 to 11 to include
+  the deployment-topology read and the sprint completion flow.
+- **`strategic-pm` "CRITICAL — Session semantics"** clarified that "chain
+  phases autonomously" applies during the sprint, NOT after the QA verdict
+  (where the PM stops at the merge gate).
+
+### Patterns evaluated post-v4
+
+These two patterns are tracked for potential v4.x integration based on
+emerging Anthropic Managed Agents features. They are NOT in v4.0 but are
+on our radar:
+
+- **Outcome-driven sprints with rubric grader** — Anthropic Managed Agents
+  introduces `define_outcomes` + auto-grader against a rubric. Could
+  enrich the `/review` phase with a structured rubric grader in a separate
+  context window (eliminating the auto-validation bias).
+  Reference: <https://platform.claude.com/docs/en/managed-agents/define-outcomes>
+
+- **Memory consolidation assist** — Anthropic Managed Agents `dreams`
+  proposes a draft consolidated memory store from past sessions, which
+  the human reviews and adopts or discards. Aligns with our manual
+  `/journal` + `/wiki-review` discipline; could become a `/consolidate-memory`
+  skill that drafts a new MEMORY.md for arbitration.
+  Reference: <https://platform.claude.com/docs/en/managed-agents/dreams>
+
+### Rolling propagation (v4.0.x)
+
+The proving-ground project also incubated **Q14 phase 3 — positive examples
+on agents and skills** (commit `31a2dd6` upstream). This is a refactor of
+form (replace negative "don't do X" examples with positive "do Y" examples)
+across 10+ agents and 5+ skills. It's not bundled in v4.0.0 because it's
+form-only; it will roll out in v4.0.x point releases as we validate each
+agent reformulation against the live behavior.
+
+### Migration
+
+See `docs/MIGRATION-v4.md` for upgrade steps from v3.5.x.
+
+### Origin
+
+Validated on the proving-ground SaaS over Sprints S0-S1 (2026-05-04 to
+2026-05-07) before propagation here. The PM merge ownership pattern
+specifically addressed an incident on 2026-05-05 where an auto-mode
+session ran `git checkout main -- .` and overwrote 5 uncommitted
+strategic-pm fixes — that incident is what shaped the
+`protect-uncommitted-hook.py` design.
+
+---
+
 ## [3.5.1] — 2026-04-11 — Hotfix
 
 ### Fixed
