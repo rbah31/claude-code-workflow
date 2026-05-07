@@ -73,6 +73,10 @@
             {
               "type": "command",
               "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import json,sys; print(json.load(sys.stdin).get('file_path',''))\" 2>/dev/null); case \"$FILE\" in /etc/*|/usr/*|/var/*|/System/*|$HOME/.ssh/*|$HOME/.aws/*) echo \"BLOCKED: write outside project directory\" && exit 1;; esac; exit 0"
+            },
+            {
+              "type": "command",
+              "command": "python3 .claude/hooks/block_wiki_write.py"
             }
           ]
         },
@@ -82,6 +86,10 @@
             {
               "type": "command",
               "command": "CMD=$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import json,sys; print(json.load(sys.stdin).get('command',''))\" 2>/dev/null); for PATTERN in 'rm -rf /' 'rm -rf ~' 'git push --force' 'git push -f' 'git reset --hard' 'chmod 777' 'mkfs' 'dd if=' 'shutdown' 'reboot'; do echo \"$CMD\" | grep -qF \"$PATTERN\" && echo \"BLOCKED: $PATTERN detected\" && exit 1; done; exit 0"
+            },
+            {
+              "type": "command",
+              "command": "python3 .claude/hooks/protect-uncommitted-hook.py"
             }
           ]
         }
