@@ -36,6 +36,32 @@ For each issue to fix:
 If a fix introduces a new issue or breaks something: stop, assess, and fix the
 regression before moving on.
 
+### Investigation-shaped findings cannot be deferred
+
+If a review finding requires a quick investigation to diagnose
+(a `grep` to confirm a code path exists, a read to verify the
+production shape of an input, a 5-second check on whether a function
+already handles the case), **do that investigation now — not later**.
+
+Specifically: do not mark such a finding as *"deferred to claude -p
+investigation"* during the fix phase. Treat the deferral pattern
+as an anti-pattern: the investigation it points to is almost always
+shorter than the deferral message itself.
+
+Decision rule:
+
+- **Investigation < 15 minutes** (a grep, a read, a short script)
+  → do it inside the current fix phase, before declaring the finding
+  resolved or deferred.
+- **Investigation ≥ 15 minutes** (cross-cutting refactor, semantic
+  ambiguity, requires architectural review) → escalate to the human
+  with explicit scope, do not silently defer.
+
+The deferral pattern hides Critical findings under the guise of
+"need to investigate", lets the sprint close, and the bug ships. Closing
+a finding requires either a fix or a deliberate, scope-explicit
+escalation — never a vague *"investigation later"*.
+
 ### Guard-fou: 3 failed attempts
 
 If three attempted fixes for the same finding all fail (tests still break or

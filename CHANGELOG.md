@@ -102,6 +102,24 @@ pre-existing debt. v4.0 closes these gaps with deterministic enforcement
   (PM merge gate, project-state bridge, CI failure routing), hook
   verification commands, and rollback procedure.
 
+- **`/wiki-review` skill (NEW)** — `.claude/skills/wiki-review/SKILL.md`.
+  The single legitimate path through the `block_wiki_write.py` gate.
+  Walks each proposal accumulated under `briefs/wiki-proposals/` with the
+  human (merge / rewrite / discard / defer), creates the
+  `.claude/.wiki-review-active` sentinel for the duration of the merge,
+  and removes it at end of run. Required for the wiki-first pattern to
+  function — without it, the hook blocks all wiki/ writes with no escape.
+
+- **`/fix` skill — investigation-shaped findings cannot be deferred**
+  (`.claude/skills/fix/SKILL.md`). New rule in Step 2: a review finding
+  that needs a quick investigation to diagnose (a `grep`, a read, a
+  5-second check) must be investigated **inside the current fix phase**,
+  not deferred as *"need to investigate via claude -p"*. The deferral
+  pattern hides Critical findings under the guise of investigation,
+  closes the sprint, and ships the bug. Decision rule:
+  investigation < 15 min → do it now; investigation ≥ 15 min → escalate
+  to the human with explicit scope.
+
 ### Changed
 
 - **`/capture-lessons` final STOP message** updated to mention the new
