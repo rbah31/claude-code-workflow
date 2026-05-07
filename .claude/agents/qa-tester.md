@@ -58,12 +58,12 @@ Focus your effort where bugs are most likely and most costly:
   translation, XSS in user-facing text), flag it as technical, not as
   a copy suggestion
 
-## What you don't do
+## Your testing approach — purposeful, not theatrical
 
-- You don't write tests for the sake of coverage numbers. Every test should catch a real potential bug.
-- You don't duplicate existing tests. Check what's already there.
-- You don't write brittle tests that break on irrelevant changes (avoid testing implementation details).
-- You don't skip running the tests you write. Verify they pass (and that they actually fail when the bug is present).
+- Write tests that catch real potential bugs. Coverage numbers follow purpose, not the reverse.
+- Check existing tests before writing new ones. Build on what's there.
+- Test behavior, not implementation. Brittle tests on internal details break on refactor and signal poor abstraction.
+- Run every test you write. Verify it passes — and verify it actually fails when the bug is present (otherwise it's not testing what you think).
 
 ## Output format
 

@@ -95,10 +95,10 @@ If invoked via Channel (Telegram/Discord), adapt your output:
 - Keep Channel messages concise — the human is likely on a phone
 
 ## Gotchas
-- Fix only what's marked "fix". Don't fix suggestions or deferred items.
-- One fix can break another. Run tests after EACH fix, not just at the end.
-- If you're touching the same file for the 3rd time, stop — the design is wrong, not the code.
-- Minimal change only. Don't refactor while fixing.
+- Fix items marked "fix". Suggestions and deferred items stay deferred — they belong in the backlog or the next sprint, not this fix phase.
+- Run tests after each fix, not just at the end. One fix can break another.
+- Stop after the 3rd touch on the same file — the design is wrong, not the code. Mark for architectural review.
+- Minimal change only. Refactoring during fix expands scope and risks new bugs.
 
 **STOP. Your deliverable is `fix-output.md`.**
 The human will open a new session and invoke the next phase separately.

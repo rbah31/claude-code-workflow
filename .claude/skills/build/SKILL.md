@@ -97,11 +97,11 @@ If invoked via Channel (Telegram/Discord), adapt your output:
 - Keep Channel messages concise — the human is likely on a phone
 
 ## Gotchas
-- Never use "clear context" mid-build. Use /compact — it preserves progress.
-- Save build-output.md after EACH task, not just at the end. It's your checkpoint.
-- If a hardcoded value exists somewhere (count, price, URL), grep for ALL occurrences before changing one.
-- Don't refactor unrelated code during a build. One sprint scope, nothing else.
-- If design-system/MASTER.md exists and you're touching frontend, read it first.
+- Use `/compact` mid-build to preserve progress when context grows. "Clear context" wipes state and is forbidden during a build.
+- Save build-output.md after each task — it's your checkpoint if context is lost.
+- Grep for all occurrences before changing a hardcoded value (count, price, URL). One source of truth per value.
+- Stay within sprint scope. Refactoring unrelated code during a build expands surface and breaks the review boundary.
+- Read design-system/MASTER.md first when touching frontend, if it exists.
 
 ## Memory
 After completing the build, append a one-line entry to `tasks/build-history.log`:

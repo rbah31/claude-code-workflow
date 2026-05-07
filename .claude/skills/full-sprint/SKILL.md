@@ -14,14 +14,12 @@ You are orchestrating a complete sprint cycle. Each phase runs in an
 isolated `claude -p` session for context isolation — the review
 MUST NOT have the build context (it biases the review).
 
-> ⚠️ **`--bare` exception**: This skill uses `--bare` for SDK startup
-> performance (~10x faster). Trade-offs: hooks skipped, API-only auth
-> (no Max OAuth). This is a documented exception — see `docs/WORKFLOW.md §3`
-> and `docs/REFERENCES.md`. Do NOT reproduce this pattern in interactive sessions.
-
 **IMPORTANT**: This skill automates the same phase-by-phase workflow as
 the manual sprint cycle. Quality comes from context isolation, not from
-running everything in one session.
+running everything in one session. Each phase runs via `claude -p
+--dangerously-skip-permissions` so all hooks fire (Stop runs tests,
+PostToolUse scans secrets, PreToolUse blocks denylisted commands and
+destructive git ops).
 
 ## Step 1 — Load context
 
@@ -38,11 +36,7 @@ Create the directory: `tasks/sprints/sprint-XX/`
 For each phase, run a separate `claude -p` session via Bash:
 
 ```bash
-# ⚠️  --bare used intentionally here for SDK startup performance (~10x faster).
-# Trade-offs: hooks skipped, API-only auth (no Max OAuth). This is an
-# exception documented in docs/WORKFLOW.md §3 and docs/REFERENCES.md.
-# Do NOT reproduce this pattern in interactive sessions.
-claude -p --bare --dangerously-skip-permissions \
+claude -p --dangerously-skip-permissions \
   "You are working on [project name]. \
    Read .claude/CLAUDE.md for project conventions. \
    Read .claude/skills/[skill]/SKILL.md and follow its instructions exactly. \
@@ -51,11 +45,18 @@ claude -p --bare --dangerously-skip-permissions \
    Run tests before declaring done."
 ```
 
-**Why `--bare`**: faster startup (~10x), clean context per phase.
-**Trade-off**: hooks (Stop, PostToolUse) won't fire. The prompt includes
-"run tests" to compensate. Rules won't auto-load — the skill file itself
-contains the necessary instructions. For full hook enforcement, remove
-`--bare` (slower but all guarantees apply).
+**Why `claude -p` without `--bare`**: full hook enforcement applies — the
+Stop hook runs tests, PostToolUse scans for secrets, PreToolUse blocks
+denylisted commands and destructive git operations. The CLAUDE.md, rules,
+and skills load automatically, so the agent gets the full project context
+without us having to inline everything in the prompt.
+
+The previous v3.x recommendation to use `--bare` for "~10x SDK startup
+performance" was retired in v4.0 because the trade-offs (hooks skipped,
+API-only auth that breaks Claude Max OAuth, missing CLAUDE.md/rules
+auto-load) outweighed the startup gain. The `--dangerously-skip-permissions`
+flag alone gives the same non-interactive behavior with all guarantees
+preserved.
 
 ### Phase sequence
 
@@ -129,7 +130,6 @@ If invoked via Channel (Telegram/Discord), adapt your output:
 - If a phase takes too long or errors out, the sprint stops. Do not attempt infinite retries.
 - The `--dangerously-skip-permissions` flag is for dev/MVP only. For production, configure permissions in `settings.json` and remove the flag.
 - Monitor your own context: if approaching 60%, wrap up and report status.
-- `--bare` skips hooks — the phase prompt includes "run tests" to compensate. For full hook enforcement, remove `--bare`.
 - The `git add -A` in Step 5 is acceptable here because the sprint workspace should only contain sprint changes. Review the diff before pushing if in doubt.
 
 **STOP. Your deliverable is a completed sprint with all output files and a PR.**
