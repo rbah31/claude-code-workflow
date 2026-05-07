@@ -76,6 +76,53 @@ This workflow evolves with Claude Code's capabilities. When a new Anthropic feat
 arrives, evaluate if it simplifies what we've built manually. If yes, migrate. If no,
 document why in `docs/REFERENCES.md`. See `docs/WORKFLOW.md §6` for current mechanism decisions.
 
+## Cache hygiene
+
+The Anthropic prompt cache (1h TTL on this session) relies on a stable prefix loaded at session start. To maximize hit rate:
+
+- **Lock at session start**: load CLAUDE.md and stable reference files (architecture, conventions, gotchas) first — treat them as the stable prefix. Keep them stable during the session to preserve cache hits.
+- **Stable prefix wins**: load reference material early; files in active rewrite (mid-edit working files) come later, outside the initial prefix.
+- **Approaching context saturation**: prefer opening a fresh session or running `/compact` manually. Fresh sessions perform better than saturated ones (context rot starts at 40-60%, severe past 80%). Auto-compact is set to 80% via `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` to avoid silent degradation.
+
+## Task delegation
+
+Use sub-agents (Agent tool) where they add real value:
+
+- **Delegate to sub-agents** for: large parallel exploration (Explore agent), well-isolated scoped tasks, repo-wide search, protection of the main context from voluminous results.
+- **Handle in-line** for: micro-tasks (editing a known file, reading a precise file), tasks needing the live conversation context, uncertain scope. In-line keeps the conversation context coherent.
+- **Brief sub-agents self-contained**: objective, minimal context, expected return format, max length ("report under 200 words"). Sub-agents didn't see the conversation — they deserve explicit framing.
+- **Read results, not just summaries**: sub-agents report what they intended to do; reading the result catches divergence from what they actually did.
+
+Note: structured agents (`strategic-pm`, `code-reviewer`, etc.) follow their own invocation rules. This block covers generic sub-agent tool usage, not orchestrated sprints.
+
+## Preferred tools
+
+Dedicated tools beat the shell: permission tracking, no escaping cost, structured output. Bash is the right tool for operations no specialized tool covers.
+
+**For each operation, the dedicated tool**:
+
+- **Read a file** → `Read` (line numbers, beats `cat`/`head`/`tail`)
+- **Modify a file** → `Edit` (string-validated, requires Read first; safer than `sed`/`awk` which can break silently)
+- **Create a file** → `Write` (atomic, beats `echo >` / `cat <<EOF`)
+- **Search text** → `Grep` (structured output, beats `grep | xargs`)
+- **Search files by pattern** → `Glob` (beats `find` via Bash)
+- **Fetch a URL** → `WebFetch` (beats `curl` via Bash)
+- **Communication** → direct output (beats `echo` / `printf`)
+- **Bash** → git, pytest, npm, deployment, shell-only operations
+
+**Advanced tools to leverage**:
+
+- **`Agent` with `subagent_type=Explore`**: large parallel repo exploration. Protects the main context from voluminous results. Ideal for "where is X defined", "who calls Y across the codebase".
+- **Parallelization**: independent tool calls (non-dependent reads/searches) belong in the same message. Sequence with explicit chaining when calls depend on each other.
+
+## Post-sprint boundary
+
+After `/capture-lessons` completes, the sprint is **done**. The next session is a fresh start:
+
+- **Do not chain** another `/sprint-plan` from the same session. Open a new `claude` session for the next sprint to get a clean cache and a focused context window.
+- **Read `tasks/lessons.md`** at the start of each phase — the skill enforces this; the lesson is that fresh sessions perform better than continued ones.
+- **Long-lived context** belongs in `briefs/project-state.md` (state) and `tasks/lessons.md` (patterns), not in the conversation history.
+
 ## Reflexes
 
 - If a task is done > 2 times manually → create a skill with `/skill-creator`
