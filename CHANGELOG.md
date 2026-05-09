@@ -179,6 +179,19 @@ PostToolUse secrets scan).
 
 See `docs/MIGRATION-v4.md` for upgrade steps from v3.5.x.
 
+### Visual identity refresh
+
+The `docs/diagrams/` set was redesigned in a beige editorial palette
+(IBM Plex) consistent across the suite. Four diagrams refreshed
+(`architecture.svg`, `anti-sycophancy.svg`, `security-layers.svg`,
+`sprint-cycle.svg`) and three new diagrams added:
+`global-architecture.svg` (the workflow stack as a single picture),
+`wiki-as-adapted-model.svg` (the wiki framed as the project-specific
+extension of the model's base knowledge — Karpathy framing), and
+`three-sessions.svg` (the three session types: sprint, exploration,
+debug). Originally produced for the *"Crafting a Claude Code Workflow"*
+talk at Mesh Union 2026 (2026-05-07), then back-ported here.
+
 ### Origin
 
 Validated on the proving-ground SaaS over Sprints S0-S1 (2026-05-04 to
