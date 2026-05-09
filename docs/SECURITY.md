@@ -1,8 +1,17 @@
 # Security Architecture — Claude Code Workflow
 
-> **Version**: v3.5.2
+> **Version**: v4.0.0
 > **Applies to**: All modes — interactive, headless (`claude -p`), and autonomous (strategic-pm)
 > **Thesis**: This workflow applies defense-in-depth to operations Claude Code runs, reducing the risk of accidental destructive actions compared to an unguarded setup.
+
+> **⚠ Disclaimer.** These layers harden Claude Code's local execution as much
+> as we reasonably can. They are **not** a substitute for a properly
+> architected secure environment — least-privilege credentials, network
+> segmentation, secrets management, audit logging, and a real CI/CD review
+> pipeline. The right model is *Claude Code's guards on top of a sound
+> architecture*, not *guards instead of one*. If your underlying setup
+> hands Claude write access to production with a god-mode token, no hook
+> count will save you.
 
 ---
 
@@ -73,16 +82,16 @@ exact list.)
 
 ### Layer 2 — Deterministic PreToolUse hooks (command-type)
 
-Two command-type hooks run a fast, deterministic check before any write or bash
-command. No LLM involved — these are grep/case statements that always produce the
-same result for the same input.
+Four command-type hooks run a fast, deterministic check before any write or bash
+command. No LLM involved — these are grep/case statements and small Python
+scripts that always produce the same result for the same input.
 
 **Why command-type, not prompt-type (LLM judge)?**
 
 Prompt-type hooks spawn an LLM call to evaluate intent. In headless mode
 (`claude -p --dangerously-skip-permissions`), this creates a blocking wait that
 can hang for 25+ minutes with no timeout. Command-type hooks run in milliseconds
-and are guaranteed to resolve. The v3.5 default favors reliability over LLM
+and are guaranteed to resolve. The v4 default still favors reliability over LLM
 judgment.
 
 > **For interactive sessions:** if you want an LLM judge in addition to these
@@ -90,21 +99,41 @@ judgment.
 > only in interactive sessions where a hang is visible and interruptible — no
 > impact on headless runs.
 
-**Write/Edit hook** — blocks writes to sensitive system paths:
+**Write/Edit — system paths block** (inline shell): blocks writes to sensitive
+system paths:
 - `/etc/`, `/usr/`, `/var/`, `/System/`
 - `~/.ssh/`, `~/.aws/`
 
-**Bash hook** — grep-based block on a secondary deny-list:
-`rm -rf /`, `rm -rf ~`, `git push --force`, `git push -f`, `git reset --hard`,
-`chmod 777`, `mkfs`, `dd if=`, `shutdown`, `reboot`
+**Write/Edit — `block_wiki_write.py`** (v4.0 — `.claude/hooks/`): blocks any
+agent write under `wiki/**`. The wiki stays human-curated; agents propose new
+pages via `briefs/wiki-proposals/<date>-<slug>.md`. The single legitimate path
+through the gate is the `/wiki-review` skill, which creates the bypass sentinel
+`.claude/.wiki-review-active` for the duration of the merge run and removes it
+at end of run. Without this hook, automated capture would silently turn the
+wiki into another conversation buffer (the failure mode the wiki exists to
+prevent).
 
-> Note: this list overlaps intentionally with Layer 1. The deny-list is the
-> primary safety net; this hook catches command variants the runtime deny-list
-> might miss — for example, chained commands (`foo && rm -rf /`) or commands
-> wrapped in subshells.
+**Bash — command pattern block** (inline shell): grep-based block on a
+secondary deny-list:
+`rm -rf /`, `rm -rf ~`, `git push --force`, `git push -f`, `git reset --hard`,
+`chmod 777`, `mkfs`, `dd if=`, `shutdown`, `reboot`. Overlaps intentionally
+with Layer 1 — catches command variants the runtime deny-list might miss
+(chained commands like `foo && rm -rf /`, subshells, etc.).
+
+**Bash — `protect-uncommitted-hook.py`** (v4.0 — `.claude/hooks/`): blocks
+destructive git commands when the worktree is dirty. Triggers on
+`git checkout -- <path>`, `git restore <path>` (without `--staged`),
+`git reset --hard`, `git stash drop|clear`, `git clean -f`, `git rm -f`. Allows
+safe variants (`git restore --staged`, `git stash push|pop`,
+`git reset --soft|--mixed`) and fail-opens on internal errors. Closes the
+silent-overwrite incident pattern observed in auto-mode sessions where an
+agent ran `git checkout main -- .` and erased uncommitted strategic-pm fixes
+(2026-05-05). When the worktree is clean, all commands pass through unchanged.
 
 **Why this matters:** Catches writes and commands that slip past the deny-list
-pattern matcher, without introducing any headless-mode hangs.
+pattern matcher, plus the two failure modes specifically surfaced in v3.x
+production usage (silent wiki drift and uncommitted-work overwrite), without
+introducing any headless-mode hangs.
 
 ### Layer 3 — Deterministic PostToolUse hooks
 
@@ -203,10 +232,12 @@ are preserved in `tasks/sprints/sprint-XX/`. This means:
 
 ## Comparison: Claude workflow vs alternatives
 
-| Guard | Open terminal | CI/CD pipeline | Claude workflow (v3.5.2) |
+| Guard | Open terminal | CI/CD pipeline | Claude workflow (v4.0.0) |
 |-------|--------------|----------------|--------------------------|
 | Deny-list (destructive cmds) | ❌ | Partial | ✅ 31 patterns |
-| Deterministic PreToolUse hooks | ❌ | ❌ | ✅ no hangs |
+| Deterministic PreToolUse hooks | ❌ | ❌ | ✅ 4 hooks, no hangs |
+| Wiki write gate (`block_wiki_write.py`) | ❌ | ❌ | ✅ v4.0 |
+| Uncommitted-work guard (`protect-uncommitted-hook.py`) | ❌ | ❌ | ✅ v4.0 |
 | Tests must pass before "done" | ❌ | ✅ | ✅ |
 | Secret scan on every write | ❌ | Optional | ✅ |
 | Auto-lint on every write | ❌ | Optional | ✅ |

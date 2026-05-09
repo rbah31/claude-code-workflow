@@ -24,7 +24,7 @@ Without structure, three things happen when you build with Claude Code:
 2. **There's no traceability.** Every session is an island. You lose track of what was decided, why, and where you are.
 3. **Quality is not systematic.** The temptation is build → ship without review or tests.
 
-This repository is the answer that emerged from running structured AI-assisted development on a real production project for two months. If you find yourself copy-pasting prompts or manually dictating steps to Claude, that's a workflow bug. It should be in a skill.
+Engineers solved *how to structure work* decades ago — sprints, planning, review, retrospectives, the discipline that DevOps culture put in place. We didn't invent a new method for AI. We taught the AI how to follow ours. The repository below is the result of two months of running structured AI-assisted development on a real production project. If you find yourself copy-pasting prompts or manually dictating steps to Claude, that's a workflow bug. It should be in a skill.
 
 ---
 
@@ -94,6 +94,14 @@ Three sprint types:
 **Manual mode**: you invoke each skill, validate the result, invoke the next.
 
 **Autonomous mode**: `claude --agent=strategic-pm` — the PM chains all phases without your intervention. The QA reviews every sprint independently. You validate the final PR.
+
+---
+
+## The whole picture
+
+![The workflow stack — agents, sessions, security and wiki layered together](docs/diagrams/global-architecture.svg)
+
+Three diagrams above showed the parts: the agent team, the sprint cycle, the anti-sycophancy guard. This one shows them stacked together — the human at the top driving direction, the strategic agents orchestrating, the security layers underneath, and the wiki feeding context. Useful when you've already met each piece individually and want to see how they compose.
 
 ---
 
@@ -221,5 +229,7 @@ Issues, ideas, war stories: [open an issue](https://github.com/rbah31/claude-cod
 ## Acknowledgments
 
 Built on top of [Claude Code](https://code.claude.com/docs/en/overview) by [Anthropic](https://www.anthropic.com). Inspired by the Claude Code community's experimentation with hooks, subagents, and skills throughout 2025–2026.
+
+The framing of `wiki/` as *the project-specific extension of the model's base knowledge* takes after Andrej Karpathy's *LLM Knowledge Bases* thread — see his work at [karpathy.ai](https://karpathy.ai). The generic model knows the public internet; the wiki adds what is yours. Together they form a model that actually knows your project.
 
 This workflow is not affiliated with or endorsed by Anthropic.

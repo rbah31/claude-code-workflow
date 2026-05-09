@@ -1,6 +1,6 @@
 # Development Workflow with Claude Code
 
-> **Version**: 3.5.2 — April 2026
+> **Version**: 4.0.0 — May 2026
 > **For**: Developers building production software with Claude Code, solo or in small teams
 > **Philosophy**: Keep it simple. The human invokes and validates. Claude executes.
 
@@ -55,6 +55,19 @@ If you find yourself copy-pasting a prompt or manually dictating steps to Claude
 - **No autonomous orchestrator by default.** Until you have 3+ successful manual sprints, the human validates between each phase. After that, the autonomous sprint type delegates phase chaining to the `strategic-pm` agent — but the human still validates the final PR. Autonomy is within a sprint, not instead of validation.
 - **No micro-management.** We don't tell Claude which vulnerabilities to look for, which code pattern to use, or which files to read. Skills and agents have that intelligence.
 - **No Claude Desktop as main tool.** Reserved for deep research and marketing. For dev: everything in Claude Code.
+
+### Adaptations to Opus 4.7
+
+Several decisions in v4.0 are direct consequences of running this workflow on Opus 4.7. They are listed here so the rationale doesn't get buried under the diff.
+
+- **Positive examples in agent prompts.** Each agent's behavioral section opens with its role explicitly named (e.g., *"Your role — reviewer, not fixer"*) and states what to do in active voice. Negative phrasing (*"don't do Y"*) generalizes worse on the new model — it leaves ambiguity at the edges where the model has to decide what falls under "Y is forbidden". Active voice removes that ambiguity. (See CHANGELOG: *Q14 prompt refactor*.)
+- **`/effort high` enabled by default.** The strategic agents reason at `effort: high` because the gain in plan and review quality is large at the latency we accept for sprint orchestration.
+- **`--bare` removed from `full-sprint`.** The `claude -p --bare` SDK path was ~10× faster to start, but it skipped hooks, broke Max OAuth, and missed `CLAUDE.md` autoload. With v4.0 introducing hooks you actively want to fire (`block_wiki_write`, `protect-uncommitted`, secrets scan), the trade is no longer worth it. Plain `claude -p` keeps every guarantee.
+- **Cache hygiene over context size.** `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=80` (auto-compact at 80% instead of 95%) and `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` (1M window off) — fresh sessions on a stable prefix beat saturated sessions on a giant window. The model degrades silently past ~80%; we just don't go there.
+- **Post-sprint boundary.** A new session starts after `/capture-lessons`. Long-lived context lives in `briefs/project-state.md` and `tasks/lessons.md`, not in conversation history. The wiki and the briefs *are* the memory; the conversation is the working window.
+- **Memory per agent stays scoped.** `strategic-pm` does not carry `code-reviewer`'s memory. Each role keeps its own focused memory; misuse them and you re-introduce the drift that the structure is meant to remove.
+
+These five adaptations together are what kept the workflow stable through May 2026's release. They are not a polish layer — remove them and the same prompts produce noticeably worse output on the same model.
 
 ---
 
@@ -148,6 +161,20 @@ One slot remains for a project-specific agent: `ml-engineer`, `data-architect`, 
 ## 3. The Sprint Cycle
 
 ![Sprint Cycle with Artifacts — What each phase produces, what the next phase reads](diagrams/sprint-cycle.svg)
+
+### Three session types — pick before you start
+
+![Three session types — sprint, exploration, debug](diagrams/three-sessions.svg)
+
+Before you choose *which* sprint type, you choose *how* you'll work with Claude this time. Three modes, picked by what you walk in with:
+
+| Session | When you use it | Mode of interaction |
+|---------|-----------------|---------------------|
+| **Sprint** | You know what you want shipped | Orchestrated. PM agent or manual cycle, structured artefacts (`tasks/sprints/sprint-XX/*`), CI in the loop |
+| **Exploration** | You don't yet know what you want | Open dialogue with Claude in a regular session. Wiki + skills are available, no skill is invoked end-to-end |
+| **Debug** | A specific bug to chase | Isolated `claude -p` session. Narrow scope, fast iteration, no sprint artefacts |
+
+The mental rule, said quickly: *"Do I know what I want? Yes → sprint. No → exploration. Bug to chase → debug."* These map to the three columns of the diagram above; "sprint type" (next subsection) is the further subdivision *inside* the sprint mode.
 
 ### Sprint Types
 
@@ -321,7 +348,7 @@ claude-project-template/
 │   ├── CLAUDE.md               # To customize
 │   ├── settings.json           # Pre-configured hooks
 │   ├── agents/                 # 9 agents: 5 universal (day 1) + 3 strategic/ops (after 3+ sprints) + 1 marketing
-│   ├── skills/                 # 18 skills (6 cycle + 2 autonomous + 5 ops + 3 marketing + 2 setup)
+│   ├── skills/                 # 19 skills (6 cycle + 2 autonomous + 1 wiki + 5 ops + 3 marketing + 2 setup)
 │   └── rules/general.md        # Base conventions
 ├── briefs/                     # Shared agent memory
 │   ├── marketing-context.md    # Template to populate via /marketing-sync
@@ -397,6 +424,23 @@ See `.claude/agents/strategic-pm.md` and `.claude/agents/strategic-qa.md` for th
 
 ## 5. Project Architecture
 
+### Why the structure looks like this
+
+The most common question when someone first opens the template: *"why this layout, why these folders?"*. The answer is that each folder solves a specific problem, and removing one re-introduces a failure mode the workflow exists to prevent.
+
+| Folder | Problem it solves |
+|--------|------------------|
+| `.claude/CLAUDE.md` | Drift across sessions. Read at the start of every session — the project's spine. The contract any agent honours regardless of which session opens it. |
+| `.claude/agents/` | One generalist trying to be PM, reviewer, security auditor and ops engineer at once → none of those well. One file per role, scoped tools, scoped memory. |
+| `.claude/skills/` | Repeating the same prompt sequence by hand → bug-prone, slow, lossy. A skill is the recipe, written once, reusable. |
+| `.claude/hooks/` | "I told you not to do that" doesn't scale. A hook is a deterministic guard that doesn't depend on the model remembering the rule. |
+| `.claude/rules/` | One global instruction file becomes contradictory ("be terse here / be verbose there"). Path-scoped rules apply only when relevant. |
+| `briefs/` | Cross-session memory the agents share. Not conversational state — explicit artefacts. Survives compaction, survives `/clear`, survives a fresh CLI process. |
+| `tasks/sprints/sprint-XX/` | Phase handoff. Each phase reads what the previous phase wrote, in a file with a known name. No "did you save the plan?" — the file is the contract. |
+| `wiki/` | Project-specific knowledge that's stable enough to be canonical. The model's base knowledge plus this wiki = a model that actually knows your project. Curated by humans (see §6 — *Wiki — your model adapted*). |
+
+The structure isn't aesthetic. Remove `briefs/` and the strategic-pm has nowhere to land its decisions; remove `tasks/sprints/sprint-XX/`, the phases lose their handoff; remove `.claude/hooks/`, the deny-list becomes the only mechanical guard. Each folder is load-bearing.
+
 ### File Structure
 
 ```
@@ -416,7 +460,7 @@ my-project/
 │   │   ├── strategic-qa.md          # Tech lead challenger for autonomous sprints
 │   │   ├── ops-monitor.md           # Ops triage and first responder
 │   │   └── marketing-strategist.md  # Peer of the PM — market direction
-│   ├── skills/                      # 18 skills — see Section 6 for full breakdown
+│   ├── skills/                      # 19 skills — see Section 6 for full breakdown
 │   │   ├── sprint-plan/             # Cycle
 │   │   ├── build/
 │   │   ├── review/
@@ -487,6 +531,20 @@ Markdown file read at the start of every session. Never compacted — this is wh
 
 The `CLAUDE.local.md` is the personal version (gitignored): your interaction preferences.
 
+### Wiki — your model adapted
+
+![The wiki as the project-specific extension of the model's base knowledge](diagrams/wiki-as-adapted-model.svg)
+
+The wiki is not a notepad. It is the project-specific extension of the model's base knowledge — the framing comes from Andrej Karpathy's *LLM Knowledge Bases* thread (see [karpathy.ai](https://karpathy.ai)).
+
+- The generic model knows the public internet — every framework, every common pattern, the shape of the language.
+- The wiki adds what is yours — domain rules, recurring incidents, the specific reason this codebase makes the choices it makes, terminology that exists nowhere else.
+- Together, they form a model that actually knows *your* project. Not a model retrained, not a model fine-tuned: a model with a curated companion knowledge base.
+
+The wiki is **human-curated** by design. Agents propose new pages via `briefs/wiki-proposals/<date>-<slug>.md`. The `block_wiki_write.py` PreToolUse hook physically prevents direct agent writes; the only legitimate path is the `/wiki-review` skill, which walks each proposal with the human (merge / rewrite / discard / defer) and creates the bypass sentinel `.claude/.wiki-review-active` for the duration of the review. This is deliberate — auto-ingested wiki content drifts into the wiki being just another conversation buffer. We kept it canonical.
+
+If the wiki is empty, the workflow still works — you fall back on the model's base knowledge plus what's in `CLAUDE.md`. As the wiki grows, your sprints and explorations get steadily sharper because the answer to *"how does this project handle X?"* is in the project, not in a paragraph the model interpolated from training data.
+
 ### Rules — Scoped Conventions
 
 Markdown files in `.claude/rules/` loaded automatically based on **path scoping**:
@@ -517,17 +575,18 @@ Invocation: automatic (Claude delegates when the description matches) or explici
 
 Folders in `.claude/skills/` with a `SKILL.md`. Invocable via `/skill-name`. **Progressive disclosure**: only the frontmatter (~100 tokens) is permanently in context, the content loads on invocation. Full skills reference: [code.claude.com/docs/en/skills](https://code.claude.com/docs/en/skills).
 
-**18 skills total**, grouped by purpose:
+**19 skills total**, grouped by purpose:
 
-| Group | Skills (6+2+5+3+2) |
+| Group | Skills (6+2+1+5+3+2) |
 |-------|-------------------|
 | **Cycle (6)** | `sprint-plan`, `build`, `review`, `fix`, `red-team`, `capture-lessons` |
 | **Autonomous (2)** | `full-sprint`, `update-briefs` |
+| **Wiki curation (1)** | `wiki-review` |
 | **Operations (5)** | `smoke-test`, `runbook`, `remote-fix`, `monitoring-briefing`, `data-analysis` |
 | **Marketing (3)** | `changelog`, `marketing-sync`, `frontend-slides` |
 | **Setup (2)** | `scaffolding`, `product-verification` |
 
-All 18 ship with the template. Use what fits your project.
+All 19 ship with the template. Use what fits your project.
 
 - **During the project**: whenever a task is done manually more than twice → `/skill-creator`
 
@@ -611,7 +670,7 @@ Usage in our workflow: **intra-phase** parallelism (3 simultaneous reviewers dur
   - **`/loop` (session, ephemeral)**: polling within the current session. Dies when the session closes. Auto-expires after 3 days. Ideal for: monitoring an ongoing deploy, babysitting a PR, one-off checks.
 
   Selection rule: if the job only needs the repo → `/schedule` cloud. If it needs local credentials → Desktop. If it's one-off → `/loop`.
-- **`--bare` flag**: Never use `--bare` in manual sessions. It skips CLAUDE.md, hooks, rules, and all project configuration. It is API-only (no interactive login) which causes auth failures on Claude Max. Use `--dangerously-skip-permissions` instead. Exception: the `/full-sprint` skill uses `--bare` intentionally for performance (~10x faster startup) with documented trade-offs — see that skill's SKILL.md for details.
+- **`--bare` flag**: Never use `--bare`. It skips CLAUDE.md, hooks, rules, and all project configuration; it is API-only (no interactive login) which breaks Claude Max OAuth. v4.0 removed the previous `/full-sprint` exception that used `--bare` for SDK startup speed — the trade-off no longer makes sense now that the v4 hooks (`block_wiki_write`, `protect-uncommitted`, secrets scan) are guards you actively want to fire. Use `--dangerously-skip-permissions` for headless runs and let plain `claude -p` keep every guarantee.
 - **`--add-dir` flag**: Gives Claude access to additional directories.
   Use when working across multiple repos or referencing external
   projects. Also available as `/add-dir` during a session.

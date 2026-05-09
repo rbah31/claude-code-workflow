@@ -158,7 +158,7 @@ The single best public source on Claude Code's internal design principles.
 |--------|-------|----------------------|
 | [1970243253061783669](https://x.com/trq212/status/1970243253061783669) | "Your Agent should use a File System" | File-based handoff between sprint phases (`plan.md` → `build-output.md` → ...) |
 | [1982869394482139206](https://x.com/trq212/status/1982869394482139206) | "Making Playgrounds using Claude Code" | Interactive HTML playgrounds for design review. Candidate for a future skill. |
-| [2017024445244924382](https://x.com/trq212/status/2017024445244924382) | Skills best practices | Trigger-focused descriptions, config self-setup, `${CLAUDE_PLUGIN_DATA}` memory pattern, `lib/` helpers, Gotchas section. Shaped our 18 skills. |
+| [2017024445244924382](https://x.com/trq212/status/2017024445244924382) | Skills best practices | Trigger-focused descriptions, config self-setup, `${CLAUDE_PLUGIN_DATA}` memory pattern, `lib/` helpers, Gotchas section. Shaped our 19 skills. |
 | [2024574133011673516](https://x.com/trq212/status/2024574133011673516) | "Prompt Caching Is Everything" | Why our CLAUDE.md is stable and small. `defer_loading` pattern. |
 | [2027463795355095314](https://x.com/trq212/status/2027463795355095314) | "Seeing like an Agent" | Progressive disclosure, AskUserQuestion, Todos-to-Tasks, Guide subagent |
 
@@ -227,7 +227,7 @@ for a different purpose (UI testing, scraping, accessibility).
 
 The canonical Anthropic PDF on skill design: YAML frontmatter, progressive
 disclosure, triggering tests, MCP integration patterns, distribution.
-Read in full before designing our 18 skills.
+Read in full before designing our 19 skills.
 
 Source: [https://code.claude.com/docs/en/overview](https://code.claude.com/docs/en/docs/agents-and-tools/agent-skills/overview)
 
