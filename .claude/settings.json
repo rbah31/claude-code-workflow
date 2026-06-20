@@ -76,7 +76,7 @@
             },
             {
               "type": "command",
-              "command": "python3 .claude/hooks/block_wiki_write.py"
+              "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_wiki_write.py\""
             }
           ]
         },
@@ -89,7 +89,7 @@
             },
             {
               "type": "command",
-              "command": "python3 .claude/hooks/protect-uncommitted-hook.py"
+              "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-uncommitted-hook.py\""
             }
           ]
         }

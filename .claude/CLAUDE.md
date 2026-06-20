@@ -130,4 +130,4 @@ After `/capture-lessons` completes, the sprint is **done**. The next session is 
 - If stuck → notify the human, don't spin in circles
 - If significant correction → update `tasks/lessons.md`
 - Always read `tasks/lessons.md` at the start of each phase (encoded in skills)
-- For complex tasks (multi-file, debugging, architecture): use `/effort high`. Default mode can be insufficient and causes edit-first instead of research-first behavior.
+- **Effort (Opus 4.8)**: xhigh is the default for agentic work (multi-file, debugging, architecture, orchestration) — it's the Claude Code default, keep it. `high` is the floor for known mechanical tasks, not the target. When a session spins, raise the effort (`/effort xhigh`) before adding instructions — under-effort causes edit-first instead of research-first behavior.

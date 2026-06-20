@@ -19,6 +19,57 @@ All commit SHAs below are verifiable in this repository's git history via
 
 ---
 
+## [4.1.0] — 2026-06-20
+
+Minor release. Realigns the agent layer and harness with the Opus 4.8 doctrine
+without changing the workflow's contract. The orchestrated pipeline still runs
+unchanged — the skills own the handoff format, the agents provide the matter.
+
+### Changed
+
+- **Reusable agent core de-verbosed** (`.claude/agents/`): the six worker agents
+  (`architect`, `code-reviewer`, `security-auditor`, `qa-tester`, `ops-engineer`,
+  `ops-monitor`) trimmed ~60% (460 → ~190 lines total). Removed rigid output
+  templates (the consuming skill already owns the format), keyword-stuffed
+  descriptions, and obvious step-by-step. Kept the substance: severity scales,
+  test priorities, ops principles, role boundaries, memory instructions.
+- **Agents decoupled from the sprint pipeline**: removed pipeline-specific
+  couplings (sprint-only triggers, marketing handoff, `/red-team` caller,
+  product-specific references) so the workers are project-type-agnostic and
+  invocable by any workflow — orchestrated pipeline, dynamic workflow, or standalone.
+- **Opus everywhere**: every agent runs `model: opus`; mechanical skills inherit
+  the session model rather than routing to a smaller one. Quality-first — spawn a
+  reviewer subagent for a second perspective instead of downgrading.
+- **Effort doctrine updated for Opus 4.8** (`.claude/CLAUDE.md`): xhigh is the
+  default for agentic work; `high` is the floor for known mechanical tasks; raise
+  the effort before adding instructions when a session spins.
+
+### Fixed
+
+- **Hooks resolve via `$CLAUDE_PROJECT_DIR`** (`.claude/settings.json`): the two
+  `PreToolUse` Python hooks (`block_wiki_write.py`, `protect-uncommitted-hook.py`)
+  were invoked by relative path, which breaks the moment the shell `cwd` moves
+  (`cd` into a subdir, worktree isolation) — the hook can't find its script and the
+  tool call is blocked. Now prefixed with `$CLAUDE_PROJECT_DIR` so resolution is
+  cwd-independent. Critical for autonomous / background-loop sessions where no human
+  resets the cwd.
+
+### Also released (post-4.0.0 template finalization)
+
+These landed on `main` after the v4.0.0 tag but were never tagged; v4.1.0
+formally releases them.
+
+- **Template seeds for downstream** (`wiki/README.md`,
+  `briefs/wiki-proposals/README.md`): new projects start with the wiki and
+  proposal-review conventions already in place.
+- **Docs**: `docs/WORKFLOW.md` documents the three session types and the
+  wiki-as-adapted-model framing; `docs/SECURITY.md` Layer 2 rewrite.
+- **Visual identity refresh**: three new diagrams (`global-architecture`,
+  `three-sessions`, `wiki-as-adapted-model`), dark-mode-safe SVG backgrounds,
+  legacy PNGs dropped.
+
+---
+
 ## [4.0.0] — 2026-05-07
 
 Major release. Five months of dogfooding on the proving-ground project surfaced
