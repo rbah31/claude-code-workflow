@@ -19,6 +19,34 @@ All commit SHAs below are verifiable in this repository's git history via
 
 ---
 
+## [4.1.1] — 2026-06-24
+
+Patch release. Fixes a dead security guard and realigns the docs with the
+"Opus everywhere" doctrine from 4.1.0. No change to agent/skill behavior.
+
+### Fixed
+
+- **Dead system-path write guard** (`.claude/settings.json`): the Write/Edit
+  PreToolUse guard read `$CLAUDE_TOOL_INPUT` (never populated by the hook runtime)
+  and looked up `file_path` at the top level, so writes to `/etc`, `~/.ssh`,
+  `~/.aws` were not blocked despite what `SECURITY.md` claimed. Rewritten to read
+  the hook payload on stdin (`tool_input.file_path`), matching the working
+  lint/secret guards. Verified: those paths now exit 1, a project file passes. The
+  destructive-Bash guard received the same stdin fix.
+
+### Changed
+
+- **Docs realigned on "Opus everywhere"** (`README.md`, `docs/WORKFLOW.md`):
+  removed the stale Sonnet routing for `qa-tester`/`ops-engineer`/`ops-monitor`
+  and the "Quota-saving mode" note (agents ship `model: opus`); added an explicit
+  model-doctrine note (skills inherit the session model). Purged residual
+  "Opus 4.7" mentions, bumped the WORKFLOW header to 4.1.0, fixed the
+  technical-agent count (six) and the context date.
+- **`docs/SECURITY.md`** reconciled with the now-functional guard, with an honest
+  caveat that the deny-list stays the primary net for Bash.
+
+---
+
 ## [4.1.0] — 2026-06-20
 
 Minor release. Realigns the agent layer and harness with the Opus 4.8 doctrine

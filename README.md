@@ -1,6 +1,6 @@
 # Claude Code Workflow
 
-> A nine-agent development team. PM proposes, QA challenges, five technical agents build. You invoke and validate.
+> A nine-agent development team. PM proposes, QA challenges, six technical agents build. You invoke and validate.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Version](https://img.shields.io/badge/version-4.1.0-green.svg)](CHANGELOG.md)
@@ -8,9 +8,9 @@
 
 ---
 
-## April 2026 context
+## June 2026 context
 
-Anthropic shipped a lot this quarter — managed agents, remote operations from your phone, dynamic scheduled tasks for monitoring without leaving your session. This repo assembles those pieces into a working multi-agent development team you can clone today, inspect end-to-end, and adapt to your project.
+Anthropic shipped a lot this quarter — managed agents, remote operations from your phone, dynamic scheduled tasks for monitoring without leaving your session, and Opus 4.8. This repo assembles those pieces into a working multi-agent development team you can clone today, inspect end-to-end, and adapt to your project.
 
 ---
 
@@ -52,7 +52,7 @@ The full version history with verifiable commit SHAs is in [CHANGELOG.md](CHANGE
 
 ![Global Architecture — The three agents that run your sprints](docs/diagrams/architecture.svg)
 
-Three strategic agents run the cycle. Five technical agents do the building.
+Three strategic agents run the cycle. Six technical agents do the building.
 
 **Strategic layer** (activate after 3+ manual sprints):
 
@@ -71,9 +71,11 @@ Three strategic agents run the cycle. Five technical agents do the building.
 | `architect` | System design, technical planning | Opus |
 | `code-reviewer` | Quality, conventions, performance, maintainability | Opus |
 | `security-auditor` | Adversarial security audit, red team | Opus |
-| `qa-tester` | Test strategy, edge cases, regression | Sonnet |
-| `ops-engineer` | CI/CD, infra, deployment, cost optimization | Sonnet |
-| `ops-monitor` | First responder, monitoring report triage | Sonnet |
+| `qa-tester` | Test strategy, edge cases, regression | Opus |
+| `ops-engineer` | CI/CD, infra, deployment, cost optimization | Opus |
+| `ops-monitor` | First responder, monitoring report triage | Opus |
+
+All agents run on Opus; the mechanical skills inherit the session model (no `model:`/`effort:` declared) — a quality-first choice we own.
 
 All agents have `memory: project` enabled — they accumulate knowledge about the codebase, past decisions, and recurring patterns across sessions.
 

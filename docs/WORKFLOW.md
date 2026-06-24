@@ -1,6 +1,6 @@
 # Development Workflow with Claude Code
 
-> **Version**: 4.0.0 — May 2026
+> **Version**: 4.1.0 — June 2026
 > **For**: Developers building production software with Claude Code, solo or in small teams
 > **Philosophy**: Keep it simple. The human invokes and validates. Claude executes.
 
@@ -56,9 +56,9 @@ If you find yourself copy-pasting a prompt or manually dictating steps to Claude
 - **No micro-management.** We don't tell Claude which vulnerabilities to look for, which code pattern to use, or which files to read. Skills and agents have that intelligence.
 - **No Claude Desktop as main tool.** Reserved for deep research and marketing. For dev: everything in Claude Code.
 
-### Adaptations to Opus 4.7
+### Adaptations to Opus 4.8
 
-Several decisions in v4.0 are direct consequences of running this workflow on Opus 4.7. They are listed here so the rationale doesn't get buried under the diff.
+Several decisions in v4.0 are direct consequences of running this workflow on Opus 4.8. They are listed here so the rationale doesn't get buried under the diff.
 
 - **Positive examples in agent prompts.** Each agent's behavioral section opens with its role explicitly named (e.g., *"Your role — reviewer, not fixer"*) and states what to do in active voice. Negative phrasing (*"don't do Y"*) generalizes worse on the new model — it leaves ambiguity at the edges where the model has to decide what falls under "Y is forbidden". Active voice removes that ambiguity. (See CHANGELOG: *Q14 prompt refactor*.)
 - **`/effort high` enabled by default.** The strategic agents reason at `effort: high` because the gain in plan and review quality is large at the latency we accept for sprint orchestration.
@@ -79,12 +79,12 @@ These five adaptations together are what kept the workflow stable through May 20
 
 | Layer | Agents | When to use |
 |-------|--------|-------------|
-| **Universal (5)** | `architect`, `code-reviewer`, `security-auditor`, `ops-engineer`, `qa-tester` | From sprint 1 — cover any project type |
-| **Strategic/Ops (3)** | `strategic-pm`, `strategic-qa`, `ops-monitor` | Activate after 3+ successful manual sprints |
+| **Technical (6)** | `architect`, `code-reviewer`, `security-auditor`, `qa-tester`, `ops-engineer`, `ops-monitor` | From sprint 1 — cover any project type |
+| **Strategic (2)** | `strategic-pm`, `strategic-qa` | Activate after 3+ successful manual sprints |
 | **Marketing (1)** | `marketing-strategist` | When user-facing communication or product positioning is involved |
 | **Optional slot (+1)** | Project-specific (`ml-engineer`, `ui-designer`, etc.) | 9 agents ship by default. Create this only when a real need emerges after 2-3 sprints. |
 
-Each agent consumes context via its description. The context budget limits were the reason to keep universals at 5 — the strategic/ops agents are used in separate sessions (`claude --agent=strategic-pm`) so they don't add to the main session budget.
+Each agent consumes context via its description. The six technical agents cover any project type from day 1 — the three orchestration agents (strategic-pm, strategic-qa, marketing-strategist) run in separate sessions (`claude --agent=strategic-pm`) so they don't add to the main session budget.
 
 ### Capitalization: The Dual Mechanism
 
@@ -99,14 +99,14 @@ In addition, agents with `memory: project` accumulate organic context between se
 | `architect` | System design, technical planning, architecture | Opus | Complex reasoning, few invocations |
 | `code-reviewer` | Code quality, conventions, perf, readability | Opus | Maximum rigor on reviews |
 | `security-auditor` | Application security, vulnerabilities, pentesting | Opus | Adversarial reasoning |
-| `ops-engineer` | CI/CD, infra, deploy, monitoring, costs | Sonnet | Often procedural tasks |
-| `qa-tester` | Test strategy, edge cases, regression | Sonnet | High volume, moderate complexity |
+| `ops-engineer` | CI/CD, infra, deploy, monitoring, costs | Opus | Quality-first across the board |
+| `qa-tester` | Test strategy, edge cases, regression | Opus | Quality-first across the board |
 | `marketing-strategist` | Positioning, copy, SEO, CRO, user feedback | Opus | Strategic judgment, positioning decisions |
 | `strategic-pm` | Autonomous sprint orchestration, product decisions | Opus | Complex judgment, orchestrates full sprints |
 | `strategic-qa` | Tech lead challenge, sprint quality review | Opus | Adversarial review of PM decisions |
-| `ops-monitor` | Monitoring triage, first responder, diagnostics | Sonnet | Fast reads, frequent invocations |
+| `ops-monitor` | Monitoring triage, first responder, diagnostics | Opus | Quality-first across the board |
 
-> **Quota-saving mode**: Opus for `architect` + `security-auditor`, Sonnet for `ops-engineer`, `qa-tester`, `ops-monitor`. Adjust based on your consumption.
+> **Model doctrine**: all agents run on Opus; the mechanical skills inherit the session model (no `model:`/`effort:` declared). This is a quality-first choice we own — no Sonnet routing. If you need to cap consumption, lower the session model or add `model:` to the agents you invoke most, but the shipped default is Opus everywhere.
 
 All agents have `memory: project` enabled.
 
@@ -347,7 +347,7 @@ claude-project-template/
 ├── .claude/
 │   ├── CLAUDE.md               # To customize
 │   ├── settings.json           # Pre-configured hooks
-│   ├── agents/                 # 9 agents: 5 universal (day 1) + 3 strategic/ops (after 3+ sprints) + 1 marketing
+│   ├── agents/                 # 9 agents: 6 technical (day 1) + 2 strategic (after 3+ sprints) + 1 marketing
 │   ├── skills/                 # 19 skills (6 cycle + 2 autonomous + 1 wiki + 5 ops + 3 marketing + 2 setup)
 │   └── rules/general.md        # Base conventions
 ├── briefs/                     # Shared agent memory
@@ -644,7 +644,7 @@ CLAUDE.md, rules, and tool definitions are cached by Claude Code's prompt cache.
 
 **Compact vs Clear**: within a phase, always `/compact` — it preserves the prefix cache (system prompt, tools, CLAUDE.md). Between two sprint phases, `/clear` or new session — fresh context is intentional (a review must not be biased by the build). The cost of cache rebuild is the price of quality.
 
-**Never switch models mid-session.** The prompt cache is unique per model. Switching from Opus to Haiku mid-session rebuilds the entire cache — it's more expensive than staying on Opus. To use a different model, go through a subagent (that's what our agents do with model: sonnet).
+**Never switch models mid-session.** The prompt cache is unique per model. Switching from Opus to Haiku mid-session rebuilds the entire cache — it's more expensive than staying on Opus. To use a different model, go through a subagent with an explicit `model:` field (our agents all run on Opus by default).
 
 **Never add or remove tools mid-session.** Tool definitions are part of the cached prefix — the same rule as model changes. Adding or removing an MCP server, changing permissions, or modifying tool availability while a session is running invalidates the cache. For tool changes: open a new session.
 

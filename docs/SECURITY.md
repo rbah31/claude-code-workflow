@@ -1,6 +1,6 @@
 # Security Architecture — Claude Code Workflow
 
-> **Version**: v4.0.0
+> **Version**: v4.1.0
 > **Applies to**: All modes — interactive, headless (`claude -p`), and autonomous (strategic-pm)
 > **Thesis**: This workflow applies defense-in-depth to operations Claude Code runs, reducing the risk of accidental destructive actions compared to an unguarded setup.
 
@@ -99,10 +99,15 @@ judgment.
 > only in interactive sessions where a hang is visible and interruptible — no
 > impact on headless runs.
 
-**Write/Edit — system paths block** (inline shell): blocks writes to sensitive
-system paths:
+**Write/Edit — system paths block** (inline command): parses the hook stdin JSON
+to extract `tool_input.file_path`, then blocks (exit 1) any write whose path falls
+under a sensitive system prefix. Verified empirically to block these prefixes:
 - `/etc/`, `/usr/`, `/var/`, `/System/`
 - `~/.ssh/`, `~/.aws/`
+
+It is a prefix match on the resolved `file_path` for Write/Edit only — it does not
+cover Bash writes (e.g. `echo ... > /etc/foo`). The deny-list and the Bash command
+guard (below) remain the primary net for Bash.
 
 **Write/Edit — `block_wiki_write.py`** (v4.0 — `.claude/hooks/`): blocks any
 agent write under `wiki/**`. The wiki stays human-curated; agents propose new
@@ -232,7 +237,7 @@ are preserved in `tasks/sprints/sprint-XX/`. This means:
 
 ## Comparison: Claude workflow vs alternatives
 
-| Guard | Open terminal | CI/CD pipeline | Claude workflow (v4.0.0) |
+| Guard | Open terminal | CI/CD pipeline | Claude workflow (v4.1.0) |
 |-------|--------------|----------------|--------------------------|
 | Deny-list (destructive cmds) | ❌ | Partial | ✅ 31 patterns |
 | Deterministic PreToolUse hooks | ❌ | ❌ | ✅ 4 hooks, no hangs |
